@@ -1,6 +1,17 @@
 use mcrs::Block;
 
 #[derive(Debug)]
+pub struct Schema {
+    pub rulesets: Vec<Ruleset>,
+}
+
+#[derive(Debug)]
+pub struct Ruleset {
+    pub name: String,
+    pub rules: Vec<Rule>,
+}
+
+#[derive(Debug)]
 pub struct Rule {
     pub from_block: Vec<Block>,
     pub from_state: Vec<State>,

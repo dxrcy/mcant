@@ -26,12 +26,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filepath = "./rules";
     let text = fs::read_to_string(filepath)?;
 
-    let mut rules = Vec::new();
-
     let mut parser = Parser::new(&text);
-    while let Some(rule) = parser.next_rule()? {
-        rules.push(rule);
-    }
+    let schema = parser.parse_schema()?;
 
     let mut mc = mcrs::Connection::new()?;
 
@@ -53,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ant.position, ant.state, ant.facing, block
         );
 
-        let Some(rule) = find_rule(&rules, &ant, block) else {
+        let Some(rule) = find_rule(&schema.rulesets[0].rules, &ant, block) else {
             println!("** HALT **");
             break;
         };

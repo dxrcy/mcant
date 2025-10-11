@@ -12,6 +12,8 @@ pub enum TokenKind {
     Comma,
     Arrow,
     Semicolon,
+    KwRuleset,
+    KwEnd,
     Ident,
 }
 
@@ -31,6 +33,8 @@ impl TokenKind {
             "," => Self::Comma,
             "->" => Self::Arrow,
             ";" => Self::Semicolon,
+            "ruleset" => Self::KwRuleset,
+            "end" => Self::KwEnd,
             _ => Self::Ident,
         }
     }
@@ -43,6 +47,8 @@ impl fmt::Display for TokenKind {
             Self::Comma => write!(f, "`,`"),
             Self::Arrow => write!(f, "`->`"),
             Self::Semicolon => write!(f, "`;`"),
+            Self::KwRuleset => write!(f, "`ruleset`"),
+            Self::KwEnd => write!(f, "`end`"),
             Self::Ident => write!(f, "<identifier>"),
         }
     }
@@ -73,6 +79,14 @@ impl<'a> Tokens<'a> {
         let ch = chars.next()?;
         self.cursor += ch.len_utf8();
         Some(ch)
+    }
+
+    fn advance_until_next_line(&mut self) {
+        while let Some(ch) = self.next_char() {
+            if Self::is_linebreak(ch) {
+                break;
+            }
+        }
     }
 
     fn advance_until_nonwhitespace(&mut self) {
@@ -117,6 +131,9 @@ impl<'a> Tokens<'a> {
         &self.text[start..self.cursor]
     }
 
+    fn is_linebreak(ch: char) -> bool {
+        ch == '\n'
+    }
     fn is_whitespace(ch: char) -> bool {
         ch.is_ascii_whitespace()
     }
@@ -132,16 +149,24 @@ impl<'a> Iterator for Tokens<'a> {
     type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.advance_until_nonwhitespace();
+        loop {
+            self.advance_until_nonwhitespace();
 
-        if self.is_end() {
-            return None;
+            if self.is_end() {
+                return None;
+            }
+
+            let string = self
+                .try_atomic()
+                .unwrap_or_else(|| self.expect_combination());
+
+            // Start of comment: skip rest of line and try again
+            if string.starts_with("--") {
+                self.advance_until_next_line();
+                continue;
+            }
+
+            return Some(Token::from(string));
         }
-
-        let string = self
-            .try_atomic()
-            .unwrap_or_else(|| self.expect_combination());
-
-        Some(Token::from(string))
     }
 }

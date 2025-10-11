@@ -5,7 +5,10 @@ use std::iter::Peekable;
 use mcrs::Block;
 
 use self::tokens::{TokenKind, Tokens};
-use crate::rules::{Rotation, Rule};
+use crate::{
+    parse::tokens::Token,
+    rules::{Rotation, Rule, Ruleset, Schema},
+};
 
 pub struct Parser<'a> {
     tokens: Peekable<Tokens<'a>>,
@@ -18,10 +21,38 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn next_rule(&mut self) -> Result<Option<Rule>, String> {
-        if self.tokens.peek().is_none() {
-            return Ok(None);
+    pub fn parse_schema(&mut self) -> Result<Schema, String> {
+        let mut rulesets = Vec::new();
+
+        while !self.is_end() {
+            let ruleset = self.expect_ruleset()?;
+            rulesets.push(ruleset);
         }
+
+        Ok(Schema { rulesets })
+    }
+
+    fn expect_ruleset(&mut self) -> Result<Ruleset, String> {
+        _ = self.expect_token_kind(TokenKind::KwRuleset)?;
+        let name = self.expect_token_kind(TokenKind::Ident)?.string.to_string();
+
+        let mut rules = Vec::new();
+
+        while !self
+            .tokens
+            .peek()
+            .is_none_or(|token| token.kind == TokenKind::KwEnd)
+        {
+            let rule = self.expect_rule()?;
+            rules.push(rule);
+        }
+        self.expect_token_kind(TokenKind::KwEnd)?;
+
+        Ok(Ruleset { name, rules })
+    }
+
+    fn expect_rule(&mut self) -> Result<Rule, String> {
+        assert!(!self.is_end());
 
         let mut from_state = Vec::new();
         for item in ListParser::new(&mut self.tokens) {
@@ -65,24 +96,32 @@ impl<'a> Parser<'a> {
         };
         self.expect_list_end(TokenKind::Semicolon)?;
 
-        Ok(Some(Rule {
+        Ok(Rule {
             from_state,
             from_block,
             // from_facing,
             to_state,
             to_block,
             to_facing,
-        }))
+        })
+    }
+
+    fn is_end(&mut self) -> bool {
+        self.tokens.peek().is_none()
+    }
+
+    fn expect_token_kind(&mut self, kind: TokenKind) -> Result<Token<'a>, String> {
+        let Some(next) = self.tokens.next() else {
+            return Err(format!("expected {}, found eof", kind));
+        };
+        if next.kind != kind {
+            return Err(format!("expected {}, found {}", kind, next.kind));
+        }
+        Ok(next)
     }
 
     fn expect_ident(&mut self) -> Result<&'a str, String> {
-        let Some(next) = self.tokens.next() else {
-            return Err(format!("expected ident, found eof"));
-        };
-        if next.kind != TokenKind::Ident {
-            return Err(format!("expected ident, found {}", next.kind));
-        }
-        Ok(next.string)
+        Ok(self.expect_token_kind(TokenKind::Ident)?.string)
     }
 
     fn expect_list_end(&mut self, end: TokenKind) -> Result<(), String> {
