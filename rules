@@ -1,0 +1,5 @@
+initial, air       , -> initial,  air,   down;
+initial, dirt/grass, -> stairup,  stone, up;
+stairup,           , -> stairout, stone, west;
+stairout,          , -> stairup,  stone, up;
+
