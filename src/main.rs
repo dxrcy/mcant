@@ -6,21 +6,7 @@ use std::fs;
 use mcrs::{Block, Coordinate};
 
 use self::parse::Parser;
-use self::rules::{Rotation, Rule, State};
-
-#[derive(Debug)]
-struct Ant {
-    position: Coordinate,
-    facing: Rotation,
-    state: State,
-}
-
-impl Ant {
-    pub fn move_forward(&mut self) {
-        let offset: Coordinate = self.facing.into_vec3().into();
-        self.position = self.position + offset;
-    }
-}
+use self::rules::{Ant, Rotation, Rule};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filepath = "./rules";
@@ -33,11 +19,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let player = mc.get_player_position()?;
 
-    let mut ant = Ant {
-        position: player,
-        facing: Rotation::PosX,
-        state: "initial".to_string(),
-    };
+    let mut ant = schema.ants[0].clone();
+    ant.position = player;
 
     loop {
         show_ant_indicator(&mut mc, ant.position)?;

@@ -1,3 +1,7 @@
+ant
+    use staircase;
+end
+
 ruleset staircase
     initial, air       , -> initial,  air,   down;
     initial, dirt/grass, -> stairup,  stone, up;

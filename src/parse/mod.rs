@@ -2,13 +2,12 @@ mod tokens;
 
 use std::iter::Peekable;
 
-use mcrs::Block;
+use mcrs::{Block, Coordinate};
 
 use self::tokens::{TokenKind, Tokens};
-use crate::{
-    parse::tokens::Token,
-    rules::{Rotation, Rule, Ruleset, Schema},
-};
+use crate::Ant;
+use crate::parse::tokens::Token;
+use crate::rules::{INITIAL_STATE, Rotation, Rule, Ruleset, Schema};
 
 pub struct Parser<'a> {
     tokens: Peekable<Tokens<'a>>,
@@ -22,18 +21,76 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_schema(&mut self) -> Result<Schema, String> {
+        let mut ants = Vec::new();
         let mut rulesets = Vec::new();
 
         while !self.is_end() {
-            let ruleset = self.expect_ruleset()?;
-            rulesets.push(ruleset);
+            if let Some(ant) = self.try_ant()? {
+                ants.push(ant);
+            } else if let Some(ruleset) = self.try_ruleset()? {
+                rulesets.push(ruleset);
+            } else {
+                return Err(format!(
+                    "expected {} or {}, found {}",
+                    TokenKind::KwRuleset,
+                    TokenKind::KwAnt,
+                    self.tokens.peek().unwrap().kind,
+                ));
+            }
         }
 
-        Ok(Schema { rulesets })
+        Ok(Schema { ants, rulesets })
     }
 
-    fn expect_ruleset(&mut self) -> Result<Ruleset, String> {
-        _ = self.expect_token_kind(TokenKind::KwRuleset)?;
+    fn try_ant(&mut self) -> Result<Option<Ant>, String> {
+        if self.try_token_kind(TokenKind::KwAnt).is_none() {
+            return Ok(None);
+        }
+
+        let mut ruleset: Option<String> = None;
+
+        while !self
+            .tokens
+            .peek()
+            .is_none_or(|token| token.kind == TokenKind::KwEnd)
+        {
+            let next = self.tokens.next().unwrap();
+            match next.kind {
+                TokenKind::KwUse => {
+                    let next = self.expect_token_kind(TokenKind::Ident)?;
+                    if ruleset.is_some() {
+                        return Err(format!("cannot use multiple rulesets for ant"));
+                    }
+                    ruleset = Some(next.string.to_string());
+                    self.expect_token_kind(TokenKind::Semicolon)?;
+                }
+
+                _ => {
+                    return Err(format!(
+                        "expected {}, found {}",
+                        TokenKind::KwUse,
+                        next.kind,
+                    ));
+                }
+            }
+        }
+        self.expect_token_kind(TokenKind::KwEnd)?;
+
+        let ruleset = ruleset.ok_or_else(|| format!("missing ruleset for ant"))?;
+
+        Ok(Some(Ant {
+            ruleset,
+            position: Coordinate::new(0, 0, 0),
+            facing: Rotation::PosX,
+            state: INITIAL_STATE.to_string(),
+        }))
+    }
+
+    fn try_ruleset(&mut self) -> Result<Option<Ruleset>, String> {
+        if self.try_token_kind(TokenKind::KwRuleset).is_none() {
+            return Ok(None);
+        }
+
         let name = self.expect_token_kind(TokenKind::Ident)?.string.to_string();
 
         let mut rules = Vec::new();
@@ -48,7 +105,7 @@ impl<'a> Parser<'a> {
         }
         self.expect_token_kind(TokenKind::KwEnd)?;
 
-        Ok(Ruleset { name, rules })
+        Ok(Some(Ruleset { name, rules }))
     }
 
     fn expect_rule(&mut self) -> Result<Rule, String> {
@@ -108,6 +165,12 @@ impl<'a> Parser<'a> {
 
     fn is_end(&mut self) -> bool {
         self.tokens.peek().is_none()
+    }
+
+    fn try_token_kind(&mut self, kind: TokenKind) -> Option<Token<'a>> {
+        self.tokens.peek().filter(|token| token.kind == kind)?;
+        let next = self.tokens.next().unwrap();
+        return Some(next);
     }
 
     fn expect_token_kind(&mut self, kind: TokenKind) -> Result<Token<'a>, String> {

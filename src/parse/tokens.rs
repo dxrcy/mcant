@@ -12,7 +12,9 @@ pub enum TokenKind {
     Comma,
     Arrow,
     Semicolon,
+    KwAnt,
     KwRuleset,
+    KwUse,
     KwEnd,
     Ident,
 }
@@ -33,7 +35,9 @@ impl TokenKind {
             "," => Self::Comma,
             "->" => Self::Arrow,
             ";" => Self::Semicolon,
+            "ant" => Self::KwAnt,
             "ruleset" => Self::KwRuleset,
+            "use" => Self::KwUse,
             "end" => Self::KwEnd,
             _ => Self::Ident,
         }
@@ -47,7 +51,9 @@ impl fmt::Display for TokenKind {
             Self::Comma => write!(f, "`,`"),
             Self::Arrow => write!(f, "`->`"),
             Self::Semicolon => write!(f, "`;`"),
+            Self::KwAnt => write!(f, "`ant`"),
             Self::KwRuleset => write!(f, "`ruleset`"),
+            Self::KwUse => write!(f, "`use`"),
             Self::KwEnd => write!(f, "`end`"),
             Self::Ident => write!(f, "<identifier>"),
         }
