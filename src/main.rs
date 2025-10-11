@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            show_ant_indicator(&mut mc, ant.position)?;
+            show_ant_indicator(&mut mc, i, ant.position)?;
 
             let block = mc.get_block(ant.position)?;
 
@@ -63,11 +63,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn show_ant_indicator(mc: &mut mcrs::Connection, position: Coordinate) -> Result<(), mcrs::Error> {
+fn show_ant_indicator(
+    mc: &mut mcrs::Connection,
+    index: usize,
+    position: Coordinate,
+) -> Result<(), mcrs::Error> {
     // Particle positions get rounded to nearest half-block by Minecraft
     let count: i32 = 1; // Number of particles in cube, per direction
     let radius = 1.0;
     let correction = 0.5; // Offset fix in blocks
+
+    let colors = [
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (0.0, 1.0, 1.0),
+        (1.0, 0.0, 1.0),
+        (1.0, 1.0, 0.0),
+        (0.5, 0.0, 0.0),
+        (0.0, 0.5, 0.0),
+        (0.0, 0.0, 0.5),
+        (0.0, 0.5, 0.5),
+        (0.5, 0.0, 0.5),
+        (0.5, 0.5, 0.0),
+    ];
+
+    let color = colors[index % colors.len()];
 
     for x in -count..=count {
         for y in -count..=count {
@@ -83,10 +104,13 @@ fn show_ant_indicator(mc: &mut mcrs::Connection, position: Coordinate) -> Result
                 }
 
                 mc.do_command(format_args!(
-                    "particle cloud {} {} {}",
-                    position.x as f32 + offset[0] + correction,
-                    position.y as f32 + offset[1] + correction,
-                    position.z as f32 + offset[2] + correction,
+                    "particle dust {r} {g} {b} 1 {x} {y} {z}",
+                    r = color.0,
+                    g = color.1,
+                    b = color.2,
+                    x = position.x as f32 + offset[0] + correction,
+                    y = position.y as f32 + offset[1] + correction,
+                    z = position.z as f32 + offset[2] + correction,
                 ))?;
             }
         }
