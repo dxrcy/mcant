@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ant.move_forward();
         }
 
-        sleep(200);
+        sleep(100);
     }
 
     Ok(())
@@ -69,9 +69,10 @@ fn show_ant_indicator(
     position: Coordinate,
 ) -> Result<(), mcrs::Error> {
     // Particle positions get rounded to nearest half-block by Minecraft
-    let count: i32 = 1; // Number of particles in cube, per direction
+    let count: i32 = 3; // Number of particles in cube, per direction
     let radius = 1.0;
     let correction = 0.5; // Offset fix in blocks
+    let size = 1.5; // Larger particle size means longer duration
 
     let colors = [
         (1.0, 0.0, 0.0),
@@ -104,10 +105,11 @@ fn show_ant_indicator(
                 }
 
                 mc.do_command(format_args!(
-                    "particle dust {r} {g} {b} 1 {x} {y} {z}",
+                    "particle dust {r} {g} {b} {size} {x} {y} {z}",
                     r = color.0,
                     g = color.1,
                     b = color.2,
+                    size = size,
                     x = position.x as f32 + offset[0] + correction,
                     y = position.y as f32 + offset[1] + correction,
                     z = position.z as f32 + offset[2] + correction,
