@@ -36,19 +36,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let block = mc.get_block(ant.position)?;
 
             print!(
-                "{:2} \t{} \t{:?} \t{:?} \t{} \t",
-                i, ant.position, ant.state, ant.facing, block
+                "{:2} \t{} \t{} \t{:?} \t{} \t",
+                i,
+                ant.position,
+                ant.state,
+                ant.facing,
+                block.get_name().unwrap_or("[unknown]"),
             );
 
             let Some(rule) = find_rule(&schema, &ant, block) else {
-                println!("** HALT **");
+                println!("====[ HALT ]====");
                 ant.halted = true;
                 break;
             };
 
             println!(
-                "{:?} \t{:?} \t{}",
-                rule.to_state, rule.to_facing, rule.to_block,
+                "{} \t{:?} \t{}",
+                rule.to_state,
+                rule.to_facing,
+                rule.to_block.get_name().unwrap_or("[unknown]"),
             );
 
             mc.set_block(ant.position, rule.to_block)?;
