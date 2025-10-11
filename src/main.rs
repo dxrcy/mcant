@@ -9,7 +9,10 @@ use self::parse::Parser;
 use self::rules::{Ant, Rule, Ruleset, Schema};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let filepath = "./example.rules";
+    let mut args = std::env::args();
+    args.next();
+
+    let filepath = args.next().ok_or("missing filepath")?;
 
     let text = fs::read_to_string(filepath)?;
 
