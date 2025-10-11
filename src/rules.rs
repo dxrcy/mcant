@@ -14,6 +14,7 @@ pub struct Ant {
     pub position: Coordinate,
     pub facing: Rotation,
     pub state: State,
+    pub halted: bool,
 }
 
 impl Ant {

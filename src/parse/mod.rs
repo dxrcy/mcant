@@ -21,21 +21,41 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_schema(&mut self) -> Result<Schema, String> {
-        let mut ants = Vec::new();
-        let mut rulesets = Vec::new();
+        let mut ants = Vec::<Ant>::new();
+        let mut rulesets = Vec::<Ruleset>::new();
 
         while !self.is_end() {
             if let Some(ant) = self.try_ant()? {
                 ants.push(ant);
-            } else if let Some(ruleset) = self.try_ruleset()? {
+                continue;
+            }
+
+            if let Some(ruleset) = self.try_ruleset()? {
+                if rulesets
+                    .iter()
+                    .any(|other| other.name.eq_ignore_ascii_case(&ruleset.name))
+                {
+                    return Err(format!("duplicate ruleset `{}`", ruleset.name));
+                }
+
                 rulesets.push(ruleset);
-            } else {
-                return Err(format!(
-                    "expected {} or {}, found {}",
-                    TokenKind::KwRuleset,
-                    TokenKind::KwAnt,
-                    self.tokens.peek().unwrap().kind,
-                ));
+                continue;
+            }
+
+            return Err(format!(
+                "expected {} or {}, found {}",
+                TokenKind::KwRuleset,
+                TokenKind::KwAnt,
+                self.tokens.peek().unwrap().kind,
+            ));
+        }
+
+        for ant in &ants {
+            if !rulesets
+                .iter()
+                .any(|ruleset| ruleset.name.eq_ignore_ascii_case(&ant.ruleset))
+            {
+                return Err(format!("unknown ruleset `{}`", ant.ruleset));
             }
         }
 
@@ -83,6 +103,7 @@ impl<'a> Parser<'a> {
             position: Coordinate::new(0, 0, 0),
             facing: Rotation::PosX,
             state: INITIAL_STATE.to_string(),
+            halted: false,
         }))
     }
 

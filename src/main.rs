@@ -6,10 +6,11 @@ use std::fs;
 use mcrs::{Block, Coordinate};
 
 use self::parse::Parser;
-use self::rules::{Ant, Rotation, Rule};
+use self::rules::{Ant, Rule, Ruleset, Schema};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let filepath = "./rules";
+    let filepath = "./example.rules";
+
     let text = fs::read_to_string(filepath)?;
 
     let mut parser = Parser::new(&text);
@@ -19,33 +20,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let player = mc.get_player_position()?;
 
-    let mut ant = schema.ants[0].clone();
-    ant.position = player;
+    let mut ants = schema.ants.clone();
+    for ant in &mut ants {
+        ant.position = player;
+    }
 
-    loop {
-        show_ant_indicator(&mut mc, ant.position)?;
+    while !ants.iter().all(|ant| ant.halted) {
+        for (i, ant) in ants.iter_mut().enumerate() {
+            if ant.halted {
+                continue;
+            }
 
-        let block = mc.get_block(ant.position)?;
+            show_ant_indicator(&mut mc, ant.position)?;
 
-        print!(
-            "{} \t{:?} \t{:?} \t{} \t",
-            ant.position, ant.state, ant.facing, block
-        );
+            let block = mc.get_block(ant.position)?;
 
-        let Some(rule) = find_rule(&schema.rulesets[0].rules, &ant, block) else {
-            println!("** HALT **");
-            break;
-        };
+            print!(
+                "{:2} \t{} \t{:?} \t{:?} \t{} \t",
+                i, ant.position, ant.state, ant.facing, block
+            );
 
-        println!(
-            "{:?} \t{:?} \t{}",
-            rule.to_state, rule.to_facing, rule.to_block,
-        );
+            let Some(rule) = find_rule(&schema, &ant, block) else {
+                println!("** HALT **");
+                ant.halted = true;
+                break;
+            };
 
-        mc.set_block(ant.position, rule.to_block)?;
-        ant.state = rule.to_state.clone();
-        ant.facing = rule.to_facing;
-        ant.move_forward();
+            println!(
+                "{:?} \t{:?} \t{}",
+                rule.to_state, rule.to_facing, rule.to_block,
+            );
+
+            mc.set_block(ant.position, rule.to_block)?;
+            ant.state = rule.to_state.clone();
+            ant.facing = rule.to_facing;
+            ant.move_forward();
+        }
 
         sleep(200);
     }
@@ -85,12 +95,22 @@ fn show_ant_indicator(mc: &mut mcrs::Connection, position: Coordinate) -> Result
     Ok(())
 }
 
-fn find_rule<'a>(rules: &'a [Rule], ant: &Ant, block: Block) -> Option<&'a Rule> {
-    for rule in rules {
+fn find_rule<'a>(schema: &'a Schema, ant: &Ant, block: Block) -> Option<&'a Rule> {
+    let ruleset = find_ruleset(schema, ant)?;
+    for rule in &ruleset.rules {
         if (rule.from_block.is_empty() || rule.from_block.contains(&block))
             && (rule.from_state.is_empty() || rule.from_state.contains(&ant.state))
         {
             return Some(rule);
+        }
+    }
+    None
+}
+
+fn find_ruleset<'a>(schema: &'a Schema, ant: &Ant) -> Option<&'a Ruleset> {
+    for ruleset in &schema.rulesets {
+        if ruleset.name == ant.ruleset {
+            return Some(ruleset);
         }
     }
     None
