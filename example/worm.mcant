@@ -1,0 +1,31 @@
+ant use $worm; end
+
+define $worm white_hardened_clay
+define $dir east
+
+ruleset $worm
+    initial, air, -> initial,, down;
+    initial, grass, -> 1,, up;
+    1, air/$worm, up   -> 2, $worm, up;
+    2, air/$worm, up   -> 1, $worm, $dir;
+    1, air/$worm, $dir -> 2, $worm, $dir;
+    2, air/$worm, $dir -> 1, $worm, down;
+    1, air/$worm, down -> 1, $worm, down;
+    1, grass, down -> 1, $worm, $dir;
+    1, grass, down -> 1, $worm, $dir;
+    1, grass, $dir -> 2, $worm, $dir;
+    2, grass, $dir -> 3, $worm, $dir;
+    3, grass, $dir -> 4, $worm, $dir;
+    4, grass, $dir -> 1, $worm, up;
+
+    rise, air/$worm, up -> step, $worm, $dir;
+    step, air/$worm, $dir -> step, $worm, down;
+    step, air/$worm, down -> fall, $worm, ;
+    step,, down -> step,, up;
+    step,, up -> step,, $dir;
+    fall, air, -> fall, $worm, down;
+    fall, grass, -> 1,, $dir;
+
+    ,, -> rise, $worm, up;
+end
+
