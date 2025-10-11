@@ -175,14 +175,14 @@ impl<'a> Parser<'a> {
         assert!(!self.is_end());
 
         let mut from_state = Vec::new();
-        for item in ListParser::new(&mut self.tokens) {
+        for item in ListParser::new(self) {
             let item = item?;
             from_state.push(item.to_string());
         }
         self.expect_list_end(TokenKind::Comma)?;
 
         let mut from_block = Vec::new();
-        for item in ListParser::new(&mut self.tokens) {
+        for item in ListParser::new(self) {
             let item = item?;
             let Some(block) = Self::parse_block(item) else {
                 return Err(format!("unknown block `{}`", item));
@@ -192,7 +192,7 @@ impl<'a> Parser<'a> {
         self.expect_list_end(TokenKind::Comma)?;
 
         let mut from_facing = Vec::new();
-        for item in ListParser::new(&mut self.tokens) {
+        for item in ListParser::new(self) {
             let item = item?;
             let Some(facing) = Self::parse_direction(item) else {
                 return Err(format!("unknown direction `{}`", item));
@@ -206,18 +206,22 @@ impl<'a> Parser<'a> {
 
         let to_block = match self.try_ident() {
             None => None,
-            Some(string) => Some(
-                Self::parse_block(string).ok_or_else(|| format!("unknown block `{}`", string))?,
-            ),
+            Some(ident) => {
+                let ident = ident?;
+                Some(Self::parse_block(ident).ok_or_else(|| format!("unknown block `{}`", ident))?)
+            }
         };
         self.expect_list_end(TokenKind::Comma)?;
 
         let to_facing = match self.try_ident() {
             None => None,
-            Some(string) => Some(
-                Self::parse_direction(string)
-                    .ok_or_else(|| format!("unknown direction `{}`", string))?,
-            ),
+            Some(ident) => {
+                let ident = ident?;
+                Some(
+                    Self::parse_direction(ident)
+                        .ok_or_else(|| format!("unknown direction `{}`", ident))?,
+                )
+            }
         };
         self.expect_list_end(TokenKind::Semicolon)?;
 
@@ -251,30 +255,30 @@ impl<'a> Parser<'a> {
         Ok(next)
     }
 
+    fn try_ident(&mut self) -> Option<Result<&'a str, String>> {
+        let ident = self.try_token_kind(TokenKind::Ident)?.string;
+        Some(self.expand_ident(ident))
+    }
+
+    fn expect_ident(&mut self) -> Result<&'a str, String> {
+        let ident = self.expect_ident_no_expand()?;
+        self.expand_ident(ident)
+    }
+
     fn expect_ident_no_expand(&mut self) -> Result<&'a str, String> {
         Ok(self.expect_token_kind(TokenKind::Ident)?.string)
     }
 
-    fn try_ident(&mut self) -> Option<&'a str> {
-        let peek = self.tokens.peek()?;
-        if peek.kind != TokenKind::Ident {
-            return None;
+    fn expand_ident(&self, ident: &'a str) -> Result<&'a str, String> {
+        if !ident.starts_with('$') {
+            return Ok(ident);
         }
-        Some(self.tokens.next().unwrap().string)
-    }
 
-    fn expect_ident(&mut self) -> Result<&'a str, String> {
-        let string = self.expect_ident_no_expand()?;
-        if string.starts_with('$') {
-            let mut chars = string.chars();
-            chars.next();
-            let symbol = remove_first_char(string);
-            let Some(expansion) = self.symbols.get(symbol) else {
-                return Err(format!("undefined symbol `{}`", symbol));
-            };
-            return Ok(expansion);
-        }
-        Ok(string)
+        let symbol = remove_first_char(ident);
+        let Some(expansion) = self.symbols.get(symbol) else {
+            return Err(format!("undefined symbol `{}`", symbol));
+        };
+        Ok(expansion)
     }
 
     fn expect_number(&mut self) -> Result<f32, String> {
@@ -338,15 +342,16 @@ fn remove_first_char(string: &str) -> &str {
 }
 
 struct ListParser<'r, 'a> {
-    tokens: &'r mut Peekable<Tokens<'a>>,
+    // tokens: &'r mut Peekable<Tokens<'a>>,
+    parser: &'r mut Parser<'a>,
     first: bool,
     end: bool,
 }
 
 impl<'r, 'a> ListParser<'r, 'a> {
-    pub fn new(tokens: &'r mut Peekable<Tokens<'a>>) -> Self {
+    pub fn new(parser: &'r mut Parser<'a>) -> Self {
         Self {
-            tokens,
+            parser,
             first: true,
             end: false,
         }
@@ -361,7 +366,7 @@ impl<'r, 'a> Iterator for ListParser<'r, 'a> {
             return None;
         }
 
-        let Some(peek) = self.tokens.peek() else {
+        let Some(peek) = self.parser.tokens.peek() else {
             return Some(Err(format!("expected token, found eof")));
         };
         if peek.kind != TokenKind::Ident {
@@ -376,15 +381,15 @@ impl<'r, 'a> Iterator for ListParser<'r, 'a> {
             )));
         }
 
-        let next = self.tokens.next().unwrap();
+        let next = self.parser.tokens.next().unwrap();
 
-        if self.tokens.peek()?.kind == TokenKind::Slash {
+        if self.parser.tokens.peek()?.kind == TokenKind::Slash {
             self.first = false;
-            _ = self.tokens.next().unwrap();
+            _ = self.parser.tokens.next().unwrap();
         } else {
             self.end = true;
         }
 
-        Some(Ok(next.string))
+        Some(self.parser.expand_ident(next.string))
     }
 }
