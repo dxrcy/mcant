@@ -37,8 +37,8 @@ pub struct Rule {
     pub from_block: Vec<Block>,
     pub from_facing: Vec<Direction>,
     pub to_state: State,
-    pub to_block: Block,
-    pub to_facing: Direction,
+    pub to_block: Option<Block>,
+    pub to_facing: Option<Direction>,
 }
 
 pub type State = String;

@@ -53,16 +53,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 break;
             };
 
-            println!(
-                "{} \t{:?} \t{}",
-                rule.to_state,
-                rule.to_facing,
-                rule.to_block.get_name().unwrap_or("[unknown]"),
-            );
+            print!("{} \t", rule.to_state);
+            if let Some(to_facing) = rule.to_facing {
+                print!("{:?}", to_facing);
+            } else {
+                print!("-");
+            }
+            print!(" \t");
+            if let Some(to_block) = rule.to_block {
+                print!("{:?}", to_block.get_name().unwrap_or("[unknown]"));
+            } else {
+                print!("-");
+            }
+            println!();
 
-            mc.set_block(ant.position, rule.to_block)?;
+            if let Some(to_block) = rule.to_block {
+                mc.set_block(ant.position, to_block)?;
+            }
             ant.state = rule.to_state.clone();
-            ant.facing = rule.to_facing;
+            if let Some(to_facing) = rule.to_facing {
+                ant.facing = to_facing;
+            }
             ant.move_forward();
         }
 

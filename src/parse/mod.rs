@@ -204,15 +204,20 @@ impl<'a> Parser<'a> {
         let to_state = self.expect_ident()?.to_string();
         self.expect_list_end(TokenKind::Comma)?;
 
-        let to_block_str = self.expect_ident()?;
-        let Some(to_block) = Self::parse_block(to_block_str) else {
-            return Err(format!("unknown block `{}`", to_block_str));
+        let to_block = match self.try_ident() {
+            None => None,
+            Some(string) => Some(
+                Self::parse_block(string).ok_or_else(|| format!("unknown block `{}`", string))?,
+            ),
         };
         self.expect_list_end(TokenKind::Comma)?;
 
-        let to_facing_str = self.expect_ident()?;
-        let Some(to_facing) = Self::parse_direction(to_facing_str) else {
-            return Err(format!("unknown direction `{}`", to_facing_str));
+        let to_facing = match self.try_ident() {
+            None => None,
+            Some(string) => Some(
+                Self::parse_direction(string)
+                    .ok_or_else(|| format!("unknown direction `{}`", string))?,
+            ),
         };
         self.expect_list_end(TokenKind::Semicolon)?;
 
@@ -248,6 +253,14 @@ impl<'a> Parser<'a> {
 
     fn expect_ident_no_expand(&mut self) -> Result<&'a str, String> {
         Ok(self.expect_token_kind(TokenKind::Ident)?.string)
+    }
+
+    fn try_ident(&mut self) -> Option<&'a str> {
+        let peek = self.tokens.peek()?;
+        if peek.kind != TokenKind::Ident {
+            return None;
+        }
+        Some(self.tokens.next().unwrap().string)
     }
 
     fn expect_ident(&mut self) -> Result<&'a str, String> {
