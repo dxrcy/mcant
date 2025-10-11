@@ -68,6 +68,7 @@ impl<'a> Parser<'a> {
         }
 
         let mut ruleset: Option<String> = None;
+        let mut offset: Option<Coordinate> = None;
 
         while !self
             .tokens
@@ -78,17 +79,35 @@ impl<'a> Parser<'a> {
             match next.kind {
                 TokenKind::KwUse => {
                     let next = self.expect_token_kind(TokenKind::Ident)?;
+                    self.expect_token_kind(TokenKind::Semicolon)?;
                     if ruleset.is_some() {
                         return Err(format!("cannot use multiple rulesets for ant"));
                     }
                     ruleset = Some(next.string.to_string());
+                }
+
+                TokenKind::KwOffset => {
+                    let x = self.expect_number()?;
+                    self.expect_token_kind(TokenKind::Comma)?;
+                    let y = self.expect_number()?;
+                    self.expect_token_kind(TokenKind::Comma)?;
+                    let z = self.expect_number()?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
+                    if offset.is_some() {
+                        return Err(format!("duplicate attribute `offset` for ant"));
+                    }
+                    offset = Some(Coordinate::new(
+                        x.floor() as i32,
+                        y.floor() as i32,
+                        z.floor() as i32,
+                    ));
                 }
 
                 _ => {
                     return Err(format!(
-                        "expected {}, found {}",
+                        "expected {} or {}, found {}",
                         TokenKind::KwUse,
+                        TokenKind::KwOffset,
                         next.kind,
                     ));
                 }
@@ -100,6 +119,7 @@ impl<'a> Parser<'a> {
 
         Ok(Some(Ant {
             ruleset,
+            offset: offset.unwrap_or(Coordinate::new(0, 0, 0)),
             position: Coordinate::new(0, 0, 0),
             facing: Rotation::PosX,
             state: INITIAL_STATE.to_string(),
@@ -206,6 +226,13 @@ impl<'a> Parser<'a> {
 
     fn expect_ident(&mut self) -> Result<&'a str, String> {
         Ok(self.expect_token_kind(TokenKind::Ident)?.string)
+    }
+
+    fn expect_number(&mut self) -> Result<f32, String> {
+        let string = self.expect_ident()?;
+        string
+            .parse()
+            .map_err(|_| format!("expected number, found non-numeric identifier"))
     }
 
     fn expect_list_end(&mut self, end: TokenKind) -> Result<(), String> {

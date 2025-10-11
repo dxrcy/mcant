@@ -1,21 +1,51 @@
-ant
-    use staircase;
+ant use staircase_west;
+    offset 10, 0, 0;
 end
 
-ant
-    use tower;
+ant use staircase_east;
+    offset -10, 0, 0;
 end
 
-ruleset staircase
-    initial, air             , -> initial,  air,   down;
-    initial, dirt/grass/stone, -> stairup,  stone, up;
-    stairup,                 , -> stairout, stone, west;
-    stairout,                , -> stairup,  stone, up;
+ant use staircase_north;
+    offset 0, 0, 10;
+end
+
+ant use staircase_south;
+    offset 0, 0, -10;
+end
+
+ant use tower;
+end
+
+ruleset staircase_west
+    initial,  air       , -> initial,  air,   down;
+    initial,  dirt/grass, -> stairup,  stone, up;
+    stairup,  air       , -> stairout, stone, west;
+    stairout, air       , -> stairup,  stone, up;
+end
+
+ruleset staircase_east
+    initial,  air       , -> initial,  air,   down;
+    initial,  dirt/grass, -> stairup,  stone, up;
+    stairup,  air       , -> stairout, stone, east;
+    stairout, air       , -> stairup,  stone, up;
+end
+
+ruleset staircase_north
+    initial,  air       , -> initial,  air,   down;
+    initial,  dirt/grass, -> stairup,  stone, up;
+    stairup,  air       , -> stairout, stone, north;
+    stairout, air       , -> stairup,  stone, up;
+end
+
+ruleset staircase_south
+    initial,  air       , -> initial,  air,   down;
+    initial,  dirt/grass, -> stairup,  stone, up;
+    stairup,  air       , -> stairout, stone, south;
+    stairout, air       , -> stairup,  stone, up;
 end
 
 ruleset tower
-    initial, air             , -> initial,  air,   down;
-    initial, dirt/grass/stone, -> towerup,  stone, up;
-    towerup,                 , -> towerup,  stone, up;
+    initial, air, -> initial, stone, down;
 end
 

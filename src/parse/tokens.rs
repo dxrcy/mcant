@@ -12,10 +12,11 @@ pub enum TokenKind {
     Comma,
     Arrow,
     Semicolon,
+    KwEnd,
     KwAnt,
     KwRuleset,
     KwUse,
-    KwEnd,
+    KwOffset,
     Ident,
 }
 
@@ -35,10 +36,11 @@ impl TokenKind {
             "," => Self::Comma,
             "->" => Self::Arrow,
             ";" => Self::Semicolon,
+            "end" => Self::KwEnd,
             "ant" => Self::KwAnt,
             "ruleset" => Self::KwRuleset,
             "use" => Self::KwUse,
-            "end" => Self::KwEnd,
+            "offset" => Self::KwOffset,
             _ => Self::Ident,
         }
     }
@@ -51,10 +53,11 @@ impl fmt::Display for TokenKind {
             Self::Comma => write!(f, "`,`"),
             Self::Arrow => write!(f, "`->`"),
             Self::Semicolon => write!(f, "`;`"),
+            Self::KwEnd => write!(f, "`end`"),
             Self::KwAnt => write!(f, "`ant`"),
             Self::KwRuleset => write!(f, "`ruleset`"),
             Self::KwUse => write!(f, "`use`"),
-            Self::KwEnd => write!(f, "`end`"),
+            Self::KwOffset => write!(f, "`offset`"),
             Self::Ident => write!(f, "<identifier>"),
         }
     }
@@ -125,7 +128,13 @@ impl<'a> Tokens<'a> {
         let start = self.cursor;
         let first = self.next_char().unwrap();
         assert!(!Self::is_whitespace(first));
-        let is_symbol = Self::is_symbol(first);
+
+        // Treat a `-` before a digit as non-symbol, to support negative numeric literals
+        let is_symbol = if first == '-' && self.peek_char().is_some_and(|ch| ch.is_ascii_digit()) {
+            false
+        } else {
+            Self::is_symbol(first)
+        };
 
         while let Some(ch) = self.peek_char() {
             if Self::is_whitespace(ch) || Self::is_atomic(ch) || Self::is_symbol(ch) != is_symbol {
@@ -147,7 +156,7 @@ impl<'a> Tokens<'a> {
         matches!(ch, ',' | ';' | '(' | ')' | '[' | ']' | '{' | '}')
     }
     fn is_symbol(ch: char) -> bool {
-        matches!(ch, '\x21'..='\x2f' | '\x3a'..='\x40'|'\x5b'..='\x60'|'\x7b'..='\x7e')
+        !matches!(ch, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')
     }
 }
 

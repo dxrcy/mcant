@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut ants = schema.ants.clone();
     for ant in &mut ants {
-        ant.position = player;
+        ant.position = player + ant.offset;
     }
 
     while !ants.iter().all(|ant| ant.halted) {

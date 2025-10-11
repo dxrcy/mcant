@@ -11,6 +11,7 @@ pub struct Schema {
 #[derive(Clone, Debug)]
 pub struct Ant {
     pub ruleset: String,
+    pub offset: Coordinate,
     pub position: Coordinate,
     pub facing: Rotation,
     pub state: State,
