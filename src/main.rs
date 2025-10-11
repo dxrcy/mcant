@@ -105,7 +105,8 @@ fn show_ant_indicator(
                 }
 
                 mc.do_command(format_args!(
-                    "particle dust {r} {g} {b} {size} {x} {y} {z}",
+                    // Indirect execution to stop errors being spammed to player's chat
+                    "execute at @a run particle dust {r} {g} {b} {size} {x} {y} {z}",
                     r = color.0,
                     g = color.1,
                     b = color.2,
