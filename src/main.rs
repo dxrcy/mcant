@@ -125,8 +125,9 @@ fn show_ant_indicator(
 fn find_rule<'a>(schema: &'a Schema, ant: &Ant, block: Block) -> Option<&'a Rule> {
     let ruleset = find_ruleset(schema, ant)?;
     for rule in &ruleset.rules {
-        if (rule.from_block.is_empty() || rule.from_block.contains(&block))
-            && (rule.from_state.is_empty() || rule.from_state.contains(&ant.state))
+        if (rule.from_state.is_empty() || rule.from_state.contains(&ant.state))
+            && (rule.from_block.is_empty() || rule.from_block.contains(&block))
+            && (rule.from_facing.is_empty() || rule.from_facing.contains(&ant.facing))
         {
             return Some(rule);
         }

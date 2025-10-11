@@ -197,7 +197,7 @@ impl<'a> Parser<'a> {
         Ok(Rule {
             from_state,
             from_block,
-            // from_facing,
+            from_facing,
             to_state,
             to_block,
             to_facing,

@@ -33,16 +33,17 @@ pub struct Ruleset {
 
 #[derive(Debug)]
 pub struct Rule {
-    pub from_block: Vec<Block>,
     pub from_state: Vec<State>,
+    pub from_block: Vec<Block>,
+    pub from_facing: Vec<Rotation>,
+    pub to_state: State,
     pub to_block: Block,
     pub to_facing: Rotation,
-    pub to_state: State,
 }
 
 pub type State = String;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Rotation {
     PosX,
     NegX,
