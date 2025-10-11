@@ -137,7 +137,7 @@ fn find_rule<'a>(schema: &'a Schema, ant: &Ant, block: Block) -> Option<&'a Rule
 
 fn find_ruleset<'a>(schema: &'a Schema, ant: &Ant) -> Option<&'a Ruleset> {
     for ruleset in &schema.rulesets {
-        if ruleset.name == ant.ruleset {
+        if ruleset.name.eq_ignore_ascii_case(&ant.ruleset) {
             return Some(ruleset);
         }
     }
