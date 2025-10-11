@@ -121,7 +121,7 @@ impl<'a> Parser<'a> {
             ruleset,
             offset: offset.unwrap_or(Coordinate::new(0, 0, 0)),
             position: Coordinate::new(0, 0, 0),
-            facing: Rotation::PosX,
+            facing: Rotation::East,
             state: INITIAL_STATE.to_string(),
             halted: false,
         }))
@@ -265,12 +265,12 @@ impl<'a> Parser<'a> {
 
     fn parse_rotation(string: &str) -> Option<Rotation> {
         const ROTATIONS: &[(&str, Rotation)] = &[
-            ("east", Rotation::PosX),
-            ("west", Rotation::NegX),
-            ("up", Rotation::PosY),
-            ("down", Rotation::NegY),
-            ("south", Rotation::PosZ),
-            ("north", Rotation::NegZ),
+            ("east", Rotation::East),
+            ("west", Rotation::West),
+            ("south", Rotation::South),
+            ("north", Rotation::North),
+            ("up", Rotation::Up),
+            ("down", Rotation::Down),
         ];
 
         for (name, rotation) in ROTATIONS {
