@@ -13,7 +13,7 @@ pub struct Ant {
     pub ruleset: String,
     pub offset: Coordinate,
     pub position: Coordinate,
-    pub facing: Rotation,
+    pub facing: Direction,
     pub state: State,
     pub halted: bool,
 }
@@ -35,16 +35,16 @@ pub struct Ruleset {
 pub struct Rule {
     pub from_state: Vec<State>,
     pub from_block: Vec<Block>,
-    pub from_facing: Vec<Rotation>,
+    pub from_facing: Vec<Direction>,
     pub to_state: State,
     pub to_block: Block,
-    pub to_facing: Rotation,
+    pub to_facing: Direction,
 }
 
 pub type State = String;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Rotation {
+pub enum Direction {
     East,
     West,
     South,
@@ -53,15 +53,15 @@ pub enum Rotation {
     Down,
 }
 
-impl Rotation {
+impl Direction {
     pub fn into_vec3(self) -> [i32; 3] {
         match self {
-            Rotation::East => [1, 0, 0],
-            Rotation::West => [-1, 0, 0],
-            Rotation::South => [0, 0, 1],
-            Rotation::North => [0, 0, -1],
-            Rotation::Up => [0, 1, 0],
-            Rotation::Down => [0, -1, 0],
+            Direction::East => [1, 0, 0],
+            Direction::West => [-1, 0, 0],
+            Direction::South => [0, 0, 1],
+            Direction::North => [0, 0, -1],
+            Direction::Up => [0, 1, 0],
+            Direction::Down => [0, -1, 0],
         }
     }
 }

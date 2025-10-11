@@ -7,7 +7,7 @@ use mcrs::{Block, Coordinate};
 use self::tokens::{TokenKind, Tokens};
 use crate::Ant;
 use crate::parse::tokens::Token;
-use crate::rules::{INITIAL_STATE, Rotation, Rule, Ruleset, Schema};
+use crate::rules::{Direction, INITIAL_STATE, Rule, Ruleset, Schema};
 
 pub struct Parser<'a> {
     tokens: Peekable<Tokens<'a>>,
@@ -121,7 +121,7 @@ impl<'a> Parser<'a> {
             ruleset,
             offset: offset.unwrap_or(Coordinate::new(0, 0, 0)),
             position: Coordinate::new(0, 0, 0),
-            facing: Rotation::East,
+            facing: Direction::East,
             state: INITIAL_STATE.to_string(),
             halted: false,
         }))
@@ -172,8 +172,8 @@ impl<'a> Parser<'a> {
         let mut from_facing = Vec::new();
         for item in ListParser::new(&mut self.tokens) {
             let item = item?;
-            let Some(facing) = Self::parse_rotation(item) else {
-                return Err(format!("unknown rotation `{}`", item));
+            let Some(facing) = Self::parse_direction(item) else {
+                return Err(format!("unknown direction `{}`", item));
             };
             from_facing.push(facing);
         }
@@ -189,8 +189,8 @@ impl<'a> Parser<'a> {
         self.expect_list_end(TokenKind::Comma)?;
 
         let to_facing_str = self.expect_ident()?;
-        let Some(to_facing) = Self::parse_rotation(to_facing_str) else {
-            return Err(format!("unknown rotation `{}`", to_facing_str));
+        let Some(to_facing) = Self::parse_direction(to_facing_str) else {
+            return Err(format!("unknown direction `{}`", to_facing_str));
         };
         self.expect_list_end(TokenKind::Semicolon)?;
 
@@ -263,19 +263,19 @@ impl<'a> Parser<'a> {
         return None;
     }
 
-    fn parse_rotation(string: &str) -> Option<Rotation> {
-        const ROTATIONS: &[(&str, Rotation)] = &[
-            ("east", Rotation::East),
-            ("west", Rotation::West),
-            ("south", Rotation::South),
-            ("north", Rotation::North),
-            ("up", Rotation::Up),
-            ("down", Rotation::Down),
+    fn parse_direction(string: &str) -> Option<Direction> {
+        const DIRECTIONS: &[(&str, Direction)] = &[
+            ("east", Direction::East),
+            ("west", Direction::West),
+            ("south", Direction::South),
+            ("north", Direction::North),
+            ("up", Direction::Up),
+            ("down", Direction::Down),
         ];
 
-        for (name, rotation) in ROTATIONS {
+        for (name, direction) in DIRECTIONS {
             if name.eq_ignore_ascii_case(string) {
-                return Some(*rotation);
+                return Some(*direction);
             }
         }
         return None;
