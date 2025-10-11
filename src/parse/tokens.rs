@@ -13,6 +13,7 @@ pub enum TokenKind {
     Arrow,
     Semicolon,
     KwEnd,
+    KwDefine,
     KwAnt,
     KwRuleset,
     KwUse,
@@ -37,6 +38,7 @@ impl TokenKind {
             "->" => Self::Arrow,
             ";" => Self::Semicolon,
             "end" => Self::KwEnd,
+            "define" => Self::KwDefine,
             "ant" => Self::KwAnt,
             "ruleset" => Self::KwRuleset,
             "use" => Self::KwUse,
@@ -54,6 +56,7 @@ impl fmt::Display for TokenKind {
             Self::Arrow => write!(f, "`->`"),
             Self::Semicolon => write!(f, "`;`"),
             Self::KwEnd => write!(f, "`end`"),
+            Self::KwDefine => write!(f, "`define`"),
             Self::KwAnt => write!(f, "`ant`"),
             Self::KwRuleset => write!(f, "`ruleset`"),
             Self::KwUse => write!(f, "`use`"),
@@ -156,7 +159,7 @@ impl<'a> Tokens<'a> {
         matches!(ch, ',' | ';' | '(' | ')' | '[' | ']' | '{' | '}')
     }
     fn is_symbol(ch: char) -> bool {
-        !matches!(ch, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')
+        !matches!(ch, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '$')
     }
 }
 

@@ -1,5 +1,6 @@
 mod tokens;
 
+use std::collections::HashMap;
 use std::iter::Peekable;
 
 use mcrs::{Block, Coordinate};
@@ -11,12 +12,14 @@ use crate::rules::{Direction, INITIAL_STATE, Rule, Ruleset, Schema};
 
 pub struct Parser<'a> {
     tokens: Peekable<Tokens<'a>>,
+    symbols: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(text: &'a str) -> Self {
         Self {
             tokens: Tokens::new(text).peekable(),
+            symbols: HashMap::new(),
         }
     }
 
@@ -25,6 +28,14 @@ impl<'a> Parser<'a> {
         let mut rulesets = Vec::<Ruleset>::new();
 
         while !self.is_end() {
+            if let Some((symbol, definition)) = self.try_symbol_define()? {
+                if self.symbols.contains_key(&symbol) {
+                    return Err(format!("redefinition of symbol `{}`", symbol));
+                }
+                self.symbols.insert(symbol, definition);
+                continue;
+            };
+
             if let Some(ant) = self.try_ant()? {
                 ants.push(ant);
                 continue;
@@ -60,6 +71,17 @@ impl<'a> Parser<'a> {
         }
 
         Ok(Schema { ants, rulesets })
+    }
+
+    fn try_symbol_define(&mut self) -> Result<Option<(&'a str, &'a str)>, String> {
+        if self.try_token_kind(TokenKind::KwDefine).is_none() {
+            return Ok(None);
+        }
+
+        let symbol = remove_first_char(self.expect_ident_no_expand()?);
+        let definition = self.expect_ident()?;
+
+        Ok(Some((symbol, definition)))
     }
 
     fn try_ant(&mut self) -> Result<Option<Ant>, String> {
@@ -224,8 +246,22 @@ impl<'a> Parser<'a> {
         Ok(next)
     }
 
-    fn expect_ident(&mut self) -> Result<&'a str, String> {
+    fn expect_ident_no_expand(&mut self) -> Result<&'a str, String> {
         Ok(self.expect_token_kind(TokenKind::Ident)?.string)
+    }
+
+    fn expect_ident(&mut self) -> Result<&'a str, String> {
+        let string = self.expect_ident_no_expand()?;
+        if string.starts_with('$') {
+            let mut chars = string.chars();
+            chars.next();
+            let symbol = remove_first_char(string);
+            let Some(expansion) = self.symbols.get(symbol) else {
+                return Err(format!("undefined symbol `{}`", symbol));
+            };
+            return Ok(expansion);
+        }
+        Ok(string)
     }
 
     fn expect_number(&mut self) -> Result<f32, String> {
@@ -280,6 +316,12 @@ impl<'a> Parser<'a> {
         }
         return None;
     }
+}
+
+fn remove_first_char(string: &str) -> &str {
+    let mut chars = string.chars();
+    chars.next();
+    return chars.as_str();
 }
 
 struct ListParser<'r, 'a> {
