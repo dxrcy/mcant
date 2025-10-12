@@ -156,6 +156,7 @@ impl<'a> Parser<'a> {
 
         let mut ruleset: Option<String> = None;
         let mut offset: Option<Coordinate> = None;
+        let mut facing: Option<Direction> = None;
 
         while !self
             .tokens
@@ -186,11 +187,22 @@ impl<'a> Parser<'a> {
                     offset = Some(Coordinate::new(x, y, z));
                 }
 
+                TokenKind::KwDirection => {
+                    let next = self.expect_token_kind(TokenKind::Ident)?;
+                    self.expect_token_kind(TokenKind::Semicolon)?;
+                    if facing.is_some() {
+                        return Err(String::from("duplicate attribute `direction` for ant"));
+                    }
+                    let direction = Self::parse_direction(next.string)
+                        .ok_or_else(|| format!("unknown direction `{}`", next.string))?;
+                    facing = Some(direction);
+                    continue;
+                }
+
                 _ => {
                     return Err(format!(
-                        "expected {} or {}, found {}",
-                        TokenKind::KwUse,
-                        TokenKind::KwOffset,
+                        "expected attribute or {}, found {}",
+                        TokenKind::KwEnd,
                         next.kind,
                     ));
                 }
@@ -200,11 +212,13 @@ impl<'a> Parser<'a> {
 
         let ruleset = ruleset.ok_or_else(|| String::from("missing ruleset for ant"))?;
 
+        const DEFAULT_DIRECTION: Direction = Direction::East;
+
         Ok(Some(Ant {
             ruleset,
             offset: offset.unwrap_or(Coordinate::new(0, 0, 0)),
             position: Coordinate::new(0, 0, 0),
-            facing: Direction::East,
+            facing: facing.unwrap_or(DEFAULT_DIRECTION),
             state: INITIAL_STATE.to_string(),
             halted: false,
             id: 0,
