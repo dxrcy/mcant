@@ -18,34 +18,34 @@ ant use tower;
 end
 
 ruleset staircase_west
-    initial, air       ,      -> initial,  air,   down;
-    initial, dirt/grass,      -> stair,    stone, up;
-    stair,   air       , up   -> stair,    stone, west;
-    stair,   air       , west -> stair,    stone, up;
+    0, air,        -> 0, air,   down;
+    0, dirt/grass, -> 1, stone, up;
+    1, air, up     -> 1, stone, west;
+    1, air, west   -> 1, stone, up;
 end
 
 ruleset staircase_east
-    initial, air       ,      -> initial,  air,   down;
-    initial, dirt/grass,      -> stair,    stone, up;
-    stair,   air       , up   -> stair,    stone, east;
-    stair,   air       , east -> stair,    stone, up;
+    0, air,        -> 0, air,   down;
+    0, dirt/grass, -> 1, stone, up;
+    1, air, up     -> 1, stone, east;
+    1, air, east   -> 1, stone, up;
 end
 
 ruleset staircase_north
-    initial, air       ,       -> initial,  air,   down;
-    initial, dirt/grass,       -> stair,    stone, up;
-    stair,   air       , up    -> stair,    stone, north;
-    stair,   air       , north -> stair,    stone, up;
+    0, air,        -> 0, air,   down;
+    0, dirt/grass, -> 1, stone, up;
+    1, air, up     -> 1, stone, north;
+    1, air, north  -> 1, stone, up;
 end
 
 ruleset staircase_south
-    initial, air       ,       -> initial,  air,   down;
-    initial, dirt/grass,       -> stair,    stone, up;
-    stair,   air       , up    -> stair,    stone, south;
-    stair,   air       , south -> stair,    stone, up;
+    0, air,        -> 0, air,   down;
+    0, dirt/grass, -> 1, stone, up;
+    1, air, up     -> 1, stone, south;
+    1, air, south  -> 1, stone, up;
 end
 
 ruleset tower
-    initial, air, -> initial, stone, down;
+    0, air, -> 0, stone, down;
 end
 

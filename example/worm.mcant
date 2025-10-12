@@ -4,8 +4,8 @@ define $worm white_hardened_clay
 define $dir east
 
 ruleset $worm
-    initial, air, -> initial,, down;
-    initial, grass, -> 1,, up;
+    0, air, -> 0,, down;
+    0, grass, -> 1,, up;
     1, air/$worm, up   -> 2, $worm, up;
     2, air/$worm, up   -> 1, $worm, $dir;
     1, air/$worm, $dir -> 2, $worm, $dir;

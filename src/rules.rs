@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use mcrs::{Block, Coordinate};
 
-pub const INITIAL_STATE: &str = "initial";
+pub const INITIAL_STATE: &str = "0";
 
 #[derive(Debug)]
 pub struct Schema {

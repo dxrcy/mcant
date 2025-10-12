@@ -10,27 +10,27 @@ define $road black_wool
 define $line yellow_wool
 
 ruleset spawner
-    initial, air, -> initial,, down;
-    initial, grass, -> 1,, $dir2 +spawn ant use road; end;
+    0, air, -> 0,, down;
+    0, grass, -> 1,, $dir2 +spawn ant use road; end;
     1,, -> 2,, +spawn ant use road; end;
     2,, -> 3,, +spawn ant use road; end;
     3,, -> 4,, +spawn ant use center; end;
     4,, -> 5,, +spawn ant use road; end;
     5,, -> 6,, +spawn ant use road; end;
-    6,, -> done,, +spawn ant use road; end;
+    6,, -> -,, +spawn ant use road; end;
 end
 
 ruleset road
-    initial, grass, -> initial, $road, $dir;
+    0, grass, -> 0, $road, $dir;
 end
 
 ruleset center
-    initial/1, grass, -> 2, $road, $dir;
+    0, grass, -> 1, $road, $dir;
+    1, grass, -> 2, $road, $dir;
     2, grass, -> 3, $road, $dir;
     3, grass, -> 4, $road, $dir;
     4, grass, -> 5, $road, $dir;
-    5, grass, -> 6, $road, $dir;
-    6, grass, -> 7, $line, $dir;
-    7, grass, -> 1, $line, $dir;
+    5, grass, -> 6, $line, $dir;
+    6, grass, -> 0, $line, $dir;
 end
 
