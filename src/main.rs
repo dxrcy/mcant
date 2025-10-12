@@ -145,7 +145,7 @@ fn show_ant_indicator(
     let color = COLORS[ant.id % COLORS.len()];
 
     if invisible {
-        create_block_particle(mc, ant.position, color, 0, 0.1, 0.5, 1.5, false)?;
+        // create_block_particle(mc, ant.position, color, 0, 0.1, 0.5, 1.5, false)?;
     } else {
         create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6, false)?;
         create_block_particle(mc, ant.position, color, 3, 0.8, 0.5, 1.0, true)?;
