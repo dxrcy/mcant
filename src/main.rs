@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     const DEFAULT_DELAY: Duration = Duration::from_millis(100);
-    const DEAFULT_CAP: usize = 20;
+    const DEAFULT_CAP: usize = 50;
 
     while !ants.iter().all(|ant| ant.halted) {
         while ants.len() > schema.properties.cap.unwrap_or(DEAFULT_CAP) {
