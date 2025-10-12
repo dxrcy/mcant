@@ -1,3 +1,5 @@
+set delay 20
+
 ant use staircase_west;
     offset 10, 0, 0;
 end
@@ -17,35 +19,37 @@ end
 ant use tower;
 end
 
+define $tripod iron_block
+
 ruleset staircase_west
-    0, air,        -> 0, air,   down;
-    0, dirt/grass, -> 1, stone, up;
-    1, air, up     -> 1, stone, west;
-    1, air, west   -> 1, stone, up;
+    0, air,      -> 0, air,   down;
+    0,,          -> 1, $tripod, up;
+    1, air, up   -> 1, $tripod, west;
+    1, air, west -> 1, $tripod, up;
 end
 
 ruleset staircase_east
-    0, air,        -> 0, air,   down;
-    0, dirt/grass, -> 1, stone, up;
-    1, air, up     -> 1, stone, east;
-    1, air, east   -> 1, stone, up;
+    0, air,      -> 0, air,   down;
+    0,,          -> 1, $tripod, up;
+    1, air, up   -> 1, $tripod, east;
+    1, air, east -> 1, $tripod, up;
 end
 
 ruleset staircase_north
-    0, air,        -> 0, air,   down;
-    0, dirt/grass, -> 1, stone, up;
-    1, air, up     -> 1, stone, north;
-    1, air, north  -> 1, stone, up;
+    0, air,       -> 0, air,   down;
+    0,,           -> 1, $tripod, up;
+    1, air, up    -> 1, $tripod, north;
+    1, air, north -> 1, $tripod, up;
 end
 
 ruleset staircase_south
-    0, air,        -> 0, air,   down;
-    0, dirt/grass, -> 1, stone, up;
-    1, air, up     -> 1, stone, south;
-    1, air, south  -> 1, stone, up;
+    0, air,       -> 0, air,   down;
+    0,,           -> 1, $tripod, up;
+    1, air, up    -> 1, $tripod, south;
+    1, air, south -> 1, $tripod, up;
 end
 
 ruleset tower
-    0, air, -> 0, stone, down;
+    0, air, -> 0, $tripod, down;
 end
 

@@ -1,3 +1,5 @@
+set delay 50
+
 ant use $worm; end
 
 define $worm white_hardened_clay

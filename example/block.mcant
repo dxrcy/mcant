@@ -13,7 +13,7 @@ define $block gold_block
 
 ruleset length
     0, air, -> 0,, down;
-    0, grass, -> A,, up;
+    0,, -> A,, up;
     A,, -> 1,, $dir1 +spawn ant use width; end;
     1,, -> 2,, $dir1 +spawn ant use width; end;
     2,, -> 3,, $dir1 +spawn ant use width; end;

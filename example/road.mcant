@@ -1,7 +1,6 @@
 set delay 10
 
 ant use spawner;
-    offset 0, 0, 0;
 end
 
 define $dir north
