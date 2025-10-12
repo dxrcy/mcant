@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 block.get_name().unwrap_or("[unknown]"),
             );
 
-            let Some(rule) = find_rule(&schema, &ant, block) else {
+            let Some(rule) = find_rule(&schema, ant, block) else {
                 println!("====[ HALT ]====");
                 ant.halted = true;
                 break;
@@ -170,22 +170,16 @@ fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::
 
 fn find_rule<'a>(schema: &'a Schema, ant: &Ant, block: Block) -> Option<&'a Rule> {
     let ruleset = find_ruleset(schema, ant)?;
-    for rule in &ruleset.rules {
-        if (rule.from_state.is_empty() || rule.from_state.contains(&ant.state))
+    ruleset.rules.iter().find(|rule| {
+        (rule.from_state.is_empty() || rule.from_state.contains(&ant.state))
             && (rule.from_block.is_empty() || rule.from_block.contains(&block))
             && (rule.from_facing.is_empty() || rule.from_facing.contains(&ant.facing))
-        {
-            return Some(rule);
-        }
-    }
-    None
+    })
 }
 
 fn find_ruleset<'a>(schema: &'a Schema, ant: &Ant) -> Option<&'a Ruleset> {
-    for ruleset in &schema.rulesets {
-        if ruleset.name.eq_ignore_ascii_case(&ant.ruleset) {
-            return Some(ruleset);
-        }
-    }
-    None
+    schema
+        .rulesets
+        .iter()
+        .find(|ruleset| ruleset.name.eq_ignore_ascii_case(&ant.ruleset))
 }

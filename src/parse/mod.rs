@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
         for ruleset in &rulesets {
             for rule in &ruleset.rules {
                 if let Some(spawn) = &rule.spawn {
-                    Self::ensure_ruleset_exists(&rulesets, &spawn)?;
+                    Self::ensure_ruleset_exists(&rulesets, spawn)?;
                 }
             }
         }
@@ -119,7 +119,7 @@ impl<'a> Parser<'a> {
             return Ok(());
         }
 
-        return Err(format!("unknown property `{}`", property));
+        Err(format!("unknown property `{}`", property))
     }
 
     fn try_property_set(&mut self) -> Result<Option<(&'a str, &'a str)>, String> {
@@ -163,7 +163,7 @@ impl<'a> Parser<'a> {
                     let next = self.expect_token_kind(TokenKind::Ident)?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
                     if ruleset.is_some() {
-                        return Err(format!("cannot use multiple rulesets for ant"));
+                        return Err(String::from("cannot use multiple rulesets for ant"));
                     }
                     ruleset = Some(next.string.to_string());
                 }
@@ -176,7 +176,7 @@ impl<'a> Parser<'a> {
                     let z = self.expect_i32()?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
                     if offset.is_some() {
-                        return Err(format!("duplicate attribute `offset` for ant"));
+                        return Err(String::from("duplicate attribute `offset` for ant"));
                     }
                     offset = Some(Coordinate::new(x, y, z));
                 }
@@ -193,7 +193,7 @@ impl<'a> Parser<'a> {
         }
         self.expect_token_kind(TokenKind::KwEnd)?;
 
-        let ruleset = ruleset.ok_or_else(|| format!("missing ruleset for ant"))?;
+        let ruleset = ruleset.ok_or_else(|| String::from("missing ruleset for ant"))?;
 
         Ok(Some(Ant {
             ruleset,
@@ -316,7 +316,7 @@ impl<'a> Parser<'a> {
     fn try_token_kind(&mut self, kind: TokenKind) -> Option<Token<'a>> {
         self.tokens.peek().filter(|token| token.kind == kind)?;
         let next = self.tokens.next().unwrap();
-        return Some(next);
+        Some(next)
     }
 
     fn expect_token_kind(&mut self, kind: TokenKind) -> Result<Token<'a>, String> {
@@ -381,9 +381,9 @@ impl<'a> Parser<'a> {
     fn parse_numeric<T: std::str::FromStr>(string: &str) -> Result<T, String> {
         string.parse().map_err(|_| {
             if (string.parse() as Result<f64, _>).is_ok() {
-                format!("invalid number value")
+                String::from("invalid number value")
             } else {
-                format!("expected number, found non-numeric identifier")
+                String::from("expected number, found non-numeric identifier")
             }
         })
     }
@@ -394,7 +394,7 @@ impl<'a> Parser<'a> {
                 return Some(block);
             }
         }
-        return None;
+        None
     }
 
     fn parse_direction(string: &str) -> Option<Direction> {
@@ -412,14 +412,14 @@ impl<'a> Parser<'a> {
                 return Some(*direction);
             }
         }
-        return None;
+        None
     }
 }
 
 fn remove_first_char(string: &str) -> &str {
     let mut chars = string.chars();
     chars.next();
-    return chars.as_str();
+    chars.as_str()
 }
 
 struct ListParser<'r, 'a> {
@@ -448,7 +448,7 @@ impl<'r, 'a> Iterator for ListParser<'r, 'a> {
         }
 
         let Some(peek) = self.parser.tokens.peek() else {
-            return Some(Err(format!("expected token, found eof")));
+            return Some(Err(String::from("expected token, found eof")));
         };
         if peek.kind != TokenKind::Ident {
             if self.first {
