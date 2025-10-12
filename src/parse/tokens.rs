@@ -75,6 +75,28 @@ impl fmt::Display for TokenKind {
     }
 }
 
+const COMMENT_START: &str = "--";
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum CharKind {
+    Whitespace,
+    Atomic,
+    Any,
+    Combining { is_symbol: bool },
+}
+
+impl CharKind {
+    fn from(ch: char) -> Self {
+        match ch {
+            _ if ch.is_ascii_whitespace() => Self::Whitespace,
+            ',' | ';' | '(' | ')' | '[' | ']' | '{' | '}' => Self::Atomic,
+            '-' => Self::Any,
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '$' => Self::Combining { is_symbol: false },
+            _ => Self::Combining { is_symbol: true },
+        }
+    }
+}
+
 pub struct Tokens<'a> {
     text: &'a str,
     cursor: usize,
@@ -102,6 +124,10 @@ impl<'a> Tokens<'a> {
         Some(ch)
     }
 
+    fn peek_is_comment(&self) -> bool {
+        self.text[self.cursor..].starts_with(COMMENT_START)
+    }
+
     fn advance_until_next_line(&mut self) {
         while let Some(ch) = self.next_char() {
             if Self::is_linebreak(ch) {
@@ -112,7 +138,7 @@ impl<'a> Tokens<'a> {
 
     fn advance_until_nonwhitespace(&mut self) {
         while let Some(ch) = self.peek_char() {
-            if !Self::is_whitespace(ch) {
+            if CharKind::from(ch) != CharKind::Whitespace {
                 break;
             }
             _ = self.next_char();
@@ -123,9 +149,10 @@ impl<'a> Tokens<'a> {
         assert!(!self.is_end());
 
         let first = self.peek_char().unwrap();
-        assert!(!Self::is_whitespace(first));
-        if !Self::is_atomic(first) {
-            return None;
+        match CharKind::from(first) {
+            CharKind::Whitespace => unreachable!(),
+            CharKind::Atomic => (),
+            _ => return None,
         }
 
         let start = self.cursor;
@@ -139,19 +166,30 @@ impl<'a> Tokens<'a> {
 
         let start = self.cursor;
         let first = self.next_char().unwrap();
-        assert!(!Self::is_whitespace(first));
 
-        // Treat a `-` before a digit as non-symbol, to support negative numeric literals
-        let is_symbol = if first == '-' && self.peek_char().is_some_and(|ch| ch.is_ascii_digit()) {
-            false
-        } else {
-            Self::is_symbol(first)
+        let mut token_is_symbol = match CharKind::from(first) {
+            CharKind::Whitespace => unreachable!(),
+            CharKind::Atomic => unreachable!(),
+            CharKind::Any => None,
+            CharKind::Combining { is_symbol } => Some(is_symbol),
         };
 
         while let Some(ch) = self.peek_char() {
-            if Self::is_whitespace(ch) || Self::is_atomic(ch) || Self::is_symbol(ch) != is_symbol {
-                break;
+            match CharKind::from(ch) {
+                CharKind::Whitespace => break,
+                CharKind::Atomic => break,
+                CharKind::Any => (),
+                CharKind::Combining { is_symbol } => {
+                    if let Some(token_is_symbol) = token_is_symbol {
+                        if token_is_symbol != is_symbol {
+                            break;
+                        }
+                    } else {
+                        token_is_symbol = Some(is_symbol);
+                    }
+                }
             }
+
             _ = self.next_char().unwrap();
         }
 
@@ -160,15 +198,6 @@ impl<'a> Tokens<'a> {
 
     fn is_linebreak(ch: char) -> bool {
         ch == '\n'
-    }
-    fn is_whitespace(ch: char) -> bool {
-        ch.is_ascii_whitespace()
-    }
-    fn is_atomic(ch: char) -> bool {
-        matches!(ch, ',' | ';' | '(' | ')' | '[' | ']' | '{' | '}')
-    }
-    fn is_symbol(ch: char) -> bool {
-        !matches!(ch, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '$')
     }
 }
 
@@ -183,15 +212,15 @@ impl<'a> Iterator for Tokens<'a> {
                 return None;
             }
 
-            let string = self
-                .try_atomic()
-                .unwrap_or_else(|| self.expect_combination());
-
             // Start of comment: skip rest of line and try again
-            if string.starts_with("--") {
+            if self.peek_is_comment() {
                 self.advance_until_next_line();
                 continue;
             }
+
+            let string = self
+                .try_atomic()
+                .unwrap_or_else(|| self.expect_combination());
 
             return Some(Token::from(string));
         }
