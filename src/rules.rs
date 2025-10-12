@@ -42,6 +42,7 @@ pub struct Rule {
     pub to_state: State,
     pub to_block: Option<Block>,
     pub to_facing: Option<Direction>,
+    pub spawn: Option<Ant>,
 }
 
 #[derive(Debug, Default)]

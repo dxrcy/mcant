@@ -32,7 +32,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     const DEFAULT_DELAY: Duration = Duration::from_millis(100);
 
     while !ants.iter().all(|ant| ant.halted) {
-        for (i, ant) in ants.iter_mut().enumerate() {
+
+        let len = ants.len();
+
+        for i in 0..len {
+            let ant = &mut ants[i];
             if ant.halted {
                 continue;
             }
@@ -78,6 +82,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ant.facing = to_facing;
             }
             ant.move_forward();
+
+            if let Some(spawn) = &rule.spawn {
+                let mut child = spawn.clone();
+                child.position = ant.position;
+                ants.push(child);
+            }
         }
 
         std::thread::sleep(schema.properties.delay.unwrap_or(DEFAULT_DELAY));

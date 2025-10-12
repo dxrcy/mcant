@@ -69,11 +69,13 @@ impl<'a> Parser<'a> {
         }
 
         for ant in &ants {
-            if !rulesets
-                .iter()
-                .any(|ruleset| ruleset.name.eq_ignore_ascii_case(&ant.ruleset))
-            {
-                return Err(format!("unknown ruleset `{}`", ant.ruleset));
+            Self::ensure_ruleset_exists(&rulesets, ant)?;
+        }
+        for ruleset in &rulesets {
+            for rule in &ruleset.rules {
+                if let Some(spawn) = &rule.spawn {
+                    Self::ensure_ruleset_exists(&rulesets, &spawn)?;
+                }
             }
         }
 
@@ -82,6 +84,16 @@ impl<'a> Parser<'a> {
             rulesets,
             properties,
         })
+    }
+
+    fn ensure_ruleset_exists(rulesets: &[Ruleset], ant: &Ant) -> Result<(), String> {
+        if !rulesets
+            .iter()
+            .any(|ruleset| ruleset.name.eq_ignore_ascii_case(&ant.ruleset))
+        {
+            return Err(format!("unknown ruleset `{}`", ant.ruleset));
+        }
+        Ok(())
     }
 
     fn update_property(
@@ -258,6 +270,22 @@ impl<'a> Parser<'a> {
                 )
             }
         };
+
+        let spawn = if self
+            .tokens
+            .peek()
+            .is_some_and(|token| token.kind == TokenKind::Plus)
+        {
+            _ = self.tokens.next().unwrap();
+            self.expect_token_kind(TokenKind::KwSpawn)?;
+            let Some(ant) = self.try_ant()? else {
+                return Err(format!("expected `{}`", TokenKind::KwAnt));
+            };
+            Some(ant)
+        } else {
+            None
+        };
+
         self.expect_list_end(TokenKind::Semicolon)?;
 
         Ok(Rule {
@@ -267,6 +295,7 @@ impl<'a> Parser<'a> {
             to_state,
             to_block,
             to_facing,
+            spawn,
         })
     }
 

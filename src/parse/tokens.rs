@@ -12,6 +12,7 @@ pub enum TokenKind {
     Comma,
     Arrow,
     Semicolon,
+    Plus,
     KwEnd,
     KwSet,
     KwDefine,
@@ -19,6 +20,7 @@ pub enum TokenKind {
     KwRuleset,
     KwUse,
     KwOffset,
+    KwSpawn,
     Ident,
 }
 
@@ -37,6 +39,7 @@ impl TokenKind {
             "/" => Self::Slash,
             "," => Self::Comma,
             "->" => Self::Arrow,
+            "+" => Self::Plus,
             ";" => Self::Semicolon,
             "end" => Self::KwEnd,
             "set" => Self::KwSet,
@@ -45,6 +48,7 @@ impl TokenKind {
             "ruleset" => Self::KwRuleset,
             "use" => Self::KwUse,
             "offset" => Self::KwOffset,
+            "spawn" => Self::KwSpawn,
             _ => Self::Ident,
         }
     }
@@ -56,6 +60,7 @@ impl fmt::Display for TokenKind {
             Self::Slash => write!(f, "`/`"),
             Self::Comma => write!(f, "`,`"),
             Self::Arrow => write!(f, "`->`"),
+            Self::Plus => write!(f, "`+`"),
             Self::Semicolon => write!(f, "`;`"),
             Self::KwEnd => write!(f, "`end`"),
             Self::KwSet => write!(f, "`set`"),
@@ -64,6 +69,7 @@ impl fmt::Display for TokenKind {
             Self::KwRuleset => write!(f, "`ruleset`"),
             Self::KwUse => write!(f, "`use`"),
             Self::KwOffset => write!(f, "`offset`"),
+            Self::KwSpawn => write!(f, "`spawn`"),
             Self::Ident => write!(f, "<identifier>"),
         }
     }
