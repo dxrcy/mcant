@@ -4,13 +4,34 @@ mod rules;
 use std::fs;
 use std::time::Duration;
 
-use mcrs::Block;
+use mcrs::{Block, Coordinate};
 
 use self::parse::Parser;
 use self::rules::{Ant, Rule, Ruleset, Schema};
 
 const DEFAULT_DELAY: Duration = Duration::from_millis(100);
 const DEAFULT_CAP: usize = 50;
+
+const COLORS: &[(f32, f32, f32)] = &[
+    (1.0, 0.0, 0.0),
+    (0.0, 1.0, 0.0),
+    (0.0, 0.0, 1.0),
+    (0.0, 1.0, 1.0),
+    (1.0, 0.0, 1.0),
+    (1.0, 1.0, 0.0),
+    (1.0, 0.5, 0.5),
+    (0.5, 1.0, 0.5),
+    (0.5, 0.5, 1.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 0.5, 1.0),
+    (1.0, 1.0, 0.5),
+    (0.5, 0.0, 0.0),
+    (0.0, 0.5, 0.0),
+    (0.0, 0.0, 0.5),
+    (0.0, 0.5, 0.5),
+    (0.5, 0.0, 0.5),
+    (0.5, 0.5, 0.0),
+];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args();
@@ -36,20 +57,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         max_id += 1;
     }
 
+    let delay = schema.properties.delay.unwrap_or(DEFAULT_DELAY);
+    let cap = schema.properties.cap.unwrap_or(DEAFULT_CAP);
+
     while !ants.iter().all(|ant| ant.halted) {
-        while ants.len() > schema.properties.cap.unwrap_or(DEAFULT_CAP) {
+        while ants.len() > cap {
             ants.remove(0);
         }
 
-        let len = ants.len();
+        for ant in ants.iter().filter(|ant| !ant.halted) {
+            show_ant_indicator(&mut mc, ant, delay)?;
+        }
 
+        std::thread::sleep(delay);
+
+        let len = ants.len();
         for i in 0..len {
             let ant = &mut ants[i];
             if ant.halted {
                 continue;
             }
-
-            show_ant_indicator(&mut mc, ant)?;
 
             let block = mc.get_block(ant.position)?;
 
@@ -107,35 +134,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::Error> {
+fn show_ant_indicator(
+    mc: &mut mcrs::Connection,
+    ant: &Ant,
+    delay: Duration,
+) -> Result<(), mcrs::Error> {
+    let color = COLORS[ant.id % COLORS.len()];
+
+    let modifier = delay.as_millis() as f32 * 0.010;
+
+    create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6 * modifier, false)?;
+    create_block_particle(mc, ant.position, color, 2, 0.8, 0.5, 1.5 * modifier, true)?;
+
+    Ok(())
+}
+
+fn create_block_particle(
+    mc: &mut mcrs::Connection,
+    position: Coordinate,
+    // RGB
+    color: (f32, f32, f32),
+    // Number of particles in cube, per direction
+    count: i32,
+    // Size of block (half)
+    radius: f32,
+    // Offset fix in blocks
+    correction: f32,
+    // Larger particle size means longer duration
+    size: f32,
+    // Show particles as a sphere, not a cube
+    round: bool,
+) -> Result<(), mcrs::Error> {
     // Particle positions get rounded to nearest half-block by Minecraft
-    let count: i32 = 3; // Number of particles in cube, per direction
-    let radius = 1.0;
-    let correction = 0.5; // Offset fix in blocks
-    let size = 1.5; // Larger particle size means longer duration
-
-    let colors = [
-        (1.0, 0.0, 0.0),
-        (0.0, 1.0, 0.0),
-        (0.0, 0.0, 1.0),
-        (0.0, 1.0, 1.0),
-        (1.0, 0.0, 1.0),
-        (1.0, 1.0, 0.0),
-        (1.0, 0.5, 0.5),
-        (0.5, 1.0, 0.5),
-        (0.5, 0.5, 1.0),
-        (0.5, 1.0, 1.0),
-        (1.0, 0.5, 1.0),
-        (1.0, 1.0, 0.5),
-        (0.5, 0.0, 0.0),
-        (0.0, 0.5, 0.0),
-        (0.0, 0.0, 0.5),
-        (0.0, 0.5, 0.5),
-        (0.5, 0.0, 0.5),
-        (0.5, 0.5, 0.0),
-    ];
-
-    let color = colors[ant.id % colors.len()];
 
     for x in -count..=count {
         for y in -count..=count {
@@ -146,7 +176,7 @@ fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::
                     (z as f32 / count as f32) * radius,
                 ];
 
-                if (offset[0].powi(2) + offset[1].powi(2) + offset[2].powi(2)) > radius {
+                if round && (offset[0].powi(2) + offset[1].powi(2) + offset[2].powi(2)) > radius {
                     continue;
                 }
 
@@ -157,9 +187,9 @@ fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::
                     g = color.1,
                     b = color.2,
                     size = size,
-                    x = ant.position.x as f32 + offset[0] + correction,
-                    y = ant.position.y as f32 + offset[1] + correction,
-                    z = ant.position.z as f32 + offset[2] + correction,
+                    x = position.x as f32 + offset[0] + correction,
+                    y = position.y as f32 + offset[1] + correction,
+                    z = position.z as f32 + offset[2] + correction,
                 ))?;
             }
         }
