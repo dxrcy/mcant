@@ -48,6 +48,7 @@ pub struct Rule {
 #[derive(Debug, Default)]
 pub struct Properties {
     pub delay: Option<Duration>,
+    pub cap: Option<usize>,
 }
 
 pub type State = String;

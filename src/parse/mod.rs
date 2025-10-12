@@ -106,7 +106,16 @@ impl<'a> Parser<'a> {
             if properties.delay.is_some() {
                 return Err(format!("duplicate property `{}`", property));
             }
-            properties.delay = Some(Duration::from_millis(millis as u64));
+            properties.delay = Some(Duration::from_millis(millis));
+            return Ok(());
+        }
+
+        if property.eq_ignore_ascii_case("cap") {
+            let count: usize = Self::parse_numeric(value)?;
+            if properties.cap.is_some() {
+                return Err(format!("duplicate property `{}`", property));
+            }
+            properties.cap = Some(count);
             return Ok(());
         }
 
