@@ -78,6 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             println!();
 
+            let previous_position = ant.position;
             if let Some(to_block) = rule.to_block {
                 mc.set_block(ant.position, to_block)?;
             }
@@ -89,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             if let Some(spawn) = &rule.spawn {
                 let mut child = spawn.clone();
-                child.position = ant.position;
+                child.position = previous_position;
                 ants.push(child);
             }
         }
