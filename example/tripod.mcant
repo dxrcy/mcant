@@ -1,55 +1,43 @@
 set delay 20
 
-ant use staircase_west;
-    offset 10, 0, 0;
-end
+ant use tower; end
+ant use leg-west; offset 10, 0, 0; end
+ant use leg-east; offset -10, 0, 0; end
+ant use leg-north; offset 0, 0, 10; end
+ant use leg-south; offset 0, 0, -10; end
 
-ant use staircase_east;
-    offset -10, 0, 0;
-end
-
-ant use staircase_north;
-    offset 0, 0, 10;
-end
-
-ant use staircase_south;
-    offset 0, 0, -10;
-end
-
-ant use tower;
-end
-
-define $tripod iron_block
-
-ruleset staircase_west
-    0, air,      -> 0, air,   down;
-    0,,          -> 1, $tripod, up;
-    1, air, up   -> 1, $tripod, west;
-    1, air, west -> 1, $tripod, up;
-end
-
-ruleset staircase_east
-    0, air,      -> 0, air,   down;
-    0,,          -> 1, $tripod, up;
-    1, air, up   -> 1, $tripod, east;
-    1, air, east -> 1, $tripod, up;
-end
-
-ruleset staircase_north
-    0, air,       -> 0, air,   down;
-    0,,           -> 1, $tripod, up;
-    1, air, up    -> 1, $tripod, north;
-    1, air, north -> 1, $tripod, up;
-end
-
-ruleset staircase_south
-    0, air,       -> 0, air,   down;
-    0,,           -> 1, $tripod, up;
-    1, air, up    -> 1, $tripod, south;
-    1, air, south -> 1, $tripod, up;
-end
+define $tower gold_block
+define $leg iron_block
 
 ruleset tower
-    0, air, -> 0, $tripod, down;
+    -- Place down until non-air
+    0, air, -> 0, $tower, down;
+end
+
+ruleset leg-west
+    -- Find ground
+    0, air,      -> 0, air,   down;
+    0,,          -> 1, $leg, up;
+    -- Staircase up and across
+    1, air, up   -> 1, $leg, west;
+    1, air, west -> 1, $leg, up;
+end
+ruleset leg-east
+    0, air,      -> 0, air,   down;
+    0,,          -> 1, $leg, up;
+    1, air, up   -> 1, $leg, east;
+    1, air, east -> 1, $leg, up;
+end
+ruleset leg-north
+    0, air,       -> 0, air,   down;
+    0,,           -> 1, $leg, up;
+    1, air, up    -> 1, $leg, north;
+    1, air, north -> 1, $leg, up;
+end
+ruleset leg-south
+    0, air,       -> 0, air,   down;
+    0,,           -> 1, $leg, up;
+    1, air, up    -> 1, $leg, south;
+    1, air, south -> 1, $leg, up;
 end
 

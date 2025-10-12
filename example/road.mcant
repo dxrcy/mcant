@@ -1,35 +1,34 @@
 set delay 10
 
-ant use spawner;
-end
+ant use spawner; end
 
-define $dir north
+define $dir1 north
 define $dir2 east
 define $road black_wool
 define $line yellow_wool
 
 ruleset spawner
     0, air, -> 0,, down;
-    0, grass, -> 1,, $dir2 +spawn ant use road; end;
-    1,, -> 2,, +spawn ant use road; end;
-    2,, -> 3,, +spawn ant use road; end;
-    3,, -> 4,, +spawn ant use center; end;
-    4,, -> 5,, +spawn ant use road; end;
-    5,, -> 6,, +spawn ant use road; end;
-    6,, -> -,, +spawn ant use road; end;
+    0,, -> 1,, $dir2 +spawn ant use road; end;
+    1,, -> 2,,       +spawn ant use road; end;
+    2,, -> 3,,       +spawn ant use road; end;
+    3,, -> 4,,       +spawn ant use center; end;
+    4,, -> 5,,       +spawn ant use road; end;
+    5,, -> 6,,       +spawn ant use road; end;
+    6,, -> -,,       +spawn ant use road; end;
 end
 
 ruleset road
-    0, grass, -> 0, $road, $dir;
+    0,, -> 0, $road, $dir1;
 end
 
 ruleset center
-    0, grass, -> 1, $road, $dir;
-    1, grass, -> 2, $road, $dir;
-    2, grass, -> 3, $road, $dir;
-    3, grass, -> 4, $road, $dir;
-    4, grass, -> 5, $road, $dir;
-    5, grass, -> 6, $line, $dir;
-    6, grass, -> 0, $line, $dir;
+    0,, -> 1, $road, $dir1;
+    1,, -> 2, $road, $dir1;
+    2,, -> 3, $road, $dir1;
+    3,, -> 4, $road, $dir1;
+    4,, -> 5, $road, $dir1;
+    5,, -> 6, $line, $dir1;
+    6,, -> 0, $line, $dir1;
 end
 

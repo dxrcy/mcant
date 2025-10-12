@@ -1,15 +1,14 @@
 set delay 1
 
-ant use spiral;
-end
+ant use spiral; end
 
 define $replace air
 
-define $edge   black_wool
-define $east   red_wool
-define $south  blue_wool
-define $west   lime_wool
-define $north  yellow_wool
+define $edge  black_wool
+define $east  red_wool
+define $south blue_wool
+define $west  lime_wool
+define $north yellow_wool
 
 ruleset spiral
     -- Find ground

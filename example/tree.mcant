@@ -2,7 +2,7 @@ set delay 10
 set cap 12
 
 ant use tree;
-    offset 0, -1, 0;
+    offset 0, -1, 0; -- Spawn just below the player
 end
 
 ruleset tree
@@ -10,10 +10,12 @@ ruleset tree
     0, air, -> 0,, down;
     0,, -> 1,, up;
 
+    -- Trunk below branches
     1, air, up -> 2, oak_wood, up;
     2, air, up -> 3, oak_wood, up;
     3, air, up -> 4, oak_wood, up;
 
+    -- Trunk with alternating branches
     4, air, up -> 5, oak_wood, up
         +spawn ant use branch; facing east; end;
     5, air, up -> 6, oak_wood, up
@@ -24,6 +26,7 @@ ruleset tree
         +spawn ant use branch; facing south; end;
 end
 
+-- Place branch in the current direction
 ruleset branch
     0,, -> 1,,;
     1, air, -> 2, oak_wood,;

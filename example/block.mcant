@@ -1,15 +1,16 @@
-set delay 10
-set cap 200
+set delay 0
+set cap 200000
+set invisible true
 
-ant use length;
-end
+ant use length; end
 
 define $dir1 east
 define $dir2 north
 define $dir3 up
 define $block gold_block
 
--- Change `-` to `0` for weird behaviour
+-- Change `-` to `1` to never halt
+define $final -
 
 ruleset length
     0, air, -> 0,, down;
@@ -19,7 +20,7 @@ ruleset length
     2,, -> 3,, $dir1 +spawn ant use width; end;
     3,, -> 4,, $dir1 +spawn ant use width; end;
     4,, -> 5,, $dir1 +spawn ant use width; end;
-    5,, -> -,, $dir1 +spawn ant use width; end;
+    5,, -> $final,, $dir1 +spawn ant use width; end;
 end
 
 ruleset width
@@ -28,7 +29,7 @@ ruleset width
     2,, -> 3,, $dir2 +spawn ant use height; end;
     3,, -> 4,, $dir2 +spawn ant use height; end;
     4,, -> 5,, $dir2 +spawn ant use height; end;
-    5,, -> -,, $dir2 +spawn ant use height; end;
+    5,, -> $final,, $dir2 +spawn ant use height; end;
 end
 
 ruleset height
@@ -37,5 +38,5 @@ ruleset height
     2,, -> 3, $block, $dir3;
     3,, -> 4, $block, $dir3;
     4,, -> 5, $block, $dir3;
-    5,, -> -, $block, $dir3;
+    5,, -> $final, $block, $dir3;
 end
