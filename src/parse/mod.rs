@@ -138,7 +138,12 @@ impl<'a> Parser<'a> {
             return Ok(None);
         }
 
-        let symbol = remove_first_char(self.expect_ident_no_expand()?);
+        let symbol = self.expect_ident_no_expand()?;
+        if !symbol.starts_with('$') {
+            return Err(String::from("symbol name must begin with `$`"));
+        }
+
+        let symbol = remove_first_char(symbol);
         let definition = self.expect_ident()?;
 
         Ok(Some((symbol, definition)))
