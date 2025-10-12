@@ -90,8 +90,7 @@ impl<'a> Parser<'a> {
         value: &str,
     ) -> Result<(), String> {
         if property.eq_ignore_ascii_case("delay") {
-            // FIXME: Parse uint
-            let millis = Self::parse_number(value)?;
+            let millis: u64 = Self::parse_numeric(value)?;
             if properties.delay.is_some() {
                 return Err(format!("duplicate property `{}`", property));
             }
@@ -149,20 +148,16 @@ impl<'a> Parser<'a> {
                 }
 
                 TokenKind::KwOffset => {
-                    let x = self.expect_number()?;
+                    let x = self.expect_i32()?;
                     self.expect_token_kind(TokenKind::Comma)?;
-                    let y = self.expect_number()?;
+                    let y = self.expect_i32()?;
                     self.expect_token_kind(TokenKind::Comma)?;
-                    let z = self.expect_number()?;
+                    let z = self.expect_i32()?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
                     if offset.is_some() {
                         return Err(format!("duplicate attribute `offset` for ant"));
                     }
-                    offset = Some(Coordinate::new(
-                        x.floor() as i32,
-                        y.floor() as i32,
-                        z.floor() as i32,
-                    ));
+                    offset = Some(Coordinate::new(x, y, z));
                 }
 
                 _ => {
@@ -321,14 +316,8 @@ impl<'a> Parser<'a> {
         Ok(expansion)
     }
 
-    fn parse_number(string: &str) -> Result<f32, String> {
-        string
-            .parse()
-            .map_err(|_| format!("expected number, found non-numeric identifier"))
-    }
-
-    fn expect_number(&mut self) -> Result<f32, String> {
-        Self::parse_number(self.expect_ident()?)
+    fn expect_i32(&mut self) -> Result<i32, String> {
+        Self::parse_numeric(self.expect_ident()?)
     }
 
     fn expect_list_end(&mut self, end: TokenKind) -> Result<(), String> {
@@ -348,6 +337,16 @@ impl<'a> Parser<'a> {
             ));
         }
         Ok(())
+    }
+
+    fn parse_numeric<T: std::str::FromStr>(string: &str) -> Result<T, String> {
+        string.parse().map_err(|_| {
+            if (string.parse() as Result<f64, _>).is_ok() {
+                format!("invalid number value")
+            } else {
+                format!("expected number, found non-numeric identifier")
+            }
+        })
     }
 
     fn parse_block(string: &str) -> Option<Block> {
