@@ -177,12 +177,12 @@ impl<'a> Parser<'a> {
             let next = self.tokens.next().unwrap();
             match next.kind {
                 TokenKind::KwUse => {
-                    let next = self.expect_token_kind(TokenKind::Ident)?;
+                    let ident = self.expect_ident()?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
                     if ruleset.is_some() {
                         return Err(String::from("cannot use multiple rulesets for ant"));
                     }
-                    ruleset = Some(next.string.to_string());
+                    ruleset = Some(ident.to_string());
                 }
 
                 TokenKind::KwOffset => {
@@ -199,14 +199,14 @@ impl<'a> Parser<'a> {
                 }
 
                 TokenKind::KwFacing => {
-                    let next = self.expect_token_kind(TokenKind::Ident)?;
+                    let ident = self.expect_ident()?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
                     if facing.is_some() {
                         return Err(String::from("duplicate attribute `facing` for ant"));
                     }
                     facing = Some(
-                        Self::parse_direction(next.string)
-                            .ok_or_else(|| format!("unknown direction `{}`", next.string))?,
+                        Self::parse_direction(ident)
+                            .ok_or_else(|| format!("unknown direction `{}`", ident))?,
                     );
                     continue;
                 }
