@@ -187,15 +187,16 @@ impl<'a> Parser<'a> {
                     offset = Some(Coordinate::new(x, y, z));
                 }
 
-                TokenKind::KwDirection => {
+                TokenKind::KwFacing => {
                     let next = self.expect_token_kind(TokenKind::Ident)?;
                     self.expect_token_kind(TokenKind::Semicolon)?;
                     if facing.is_some() {
-                        return Err(String::from("duplicate attribute `direction` for ant"));
+                        return Err(String::from("duplicate attribute `facing` for ant"));
                     }
-                    let direction = Self::parse_direction(next.string)
-                        .ok_or_else(|| format!("unknown direction `{}`", next.string))?;
-                    facing = Some(direction);
+                    facing = Some(
+                        Self::parse_direction(next.string)
+                            .ok_or_else(|| format!("unknown direction `{}`", next.string))?,
+                    );
                     continue;
                 }
 

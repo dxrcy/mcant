@@ -20,7 +20,7 @@ pub enum TokenKind {
     KwRuleset,
     KwUse,
     KwOffset,
-    KwDirection,
+    KwFacing,
     KwSpawn,
     Ident,
 }
@@ -49,7 +49,7 @@ impl TokenKind {
             "ruleset" => Self::KwRuleset,
             "use" => Self::KwUse,
             "offset" => Self::KwOffset,
-            "direction" => Self::KwDirection,
+            "facing" => Self::KwFacing,
             "spawn" => Self::KwSpawn,
             _ => Self::Ident,
         }
@@ -71,7 +71,7 @@ impl fmt::Display for TokenKind {
             Self::KwRuleset => write!(f, "`ruleset`"),
             Self::KwUse => write!(f, "`use`"),
             Self::KwOffset => write!(f, "`offset`"),
-            Self::KwDirection => write!(f, "`direction`"),
+            Self::KwFacing => write!(f, "`facing`"),
             Self::KwSpawn => write!(f, "`spawn`"),
             Self::Ident => write!(f, "<identifier>"),
         }

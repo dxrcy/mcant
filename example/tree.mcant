@@ -15,13 +15,13 @@ ruleset tree
     3, air, up -> 4, oak_wood, up;
 
     4, air, up -> 5, oak_wood, up
-        +spawn ant use branch; direction east; end;
+        +spawn ant use branch; facing east; end;
     5, air, up -> 6, oak_wood, up
-        +spawn ant use branch; direction west; end;
+        +spawn ant use branch; facing west; end;
     6, air, up -> 7, oak_wood, up
-        +spawn ant use branch; direction north; end;
+        +spawn ant use branch; facing north; end;
     7, air, up -> 4, oak_wood, up
-        +spawn ant use branch; direction south; end;
+        +spawn ant use branch; facing south; end;
 end
 
 ruleset branch
