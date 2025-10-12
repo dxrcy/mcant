@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         for ant in ants.iter().filter(|ant| !ant.halted) {
-            show_ant_indicator(&mut mc, ant, delay)?;
+            show_ant_indicator(&mut mc, ant)?;
         }
 
         std::thread::sleep(delay);
@@ -134,17 +134,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn show_ant_indicator(
-    mc: &mut mcrs::Connection,
-    ant: &Ant,
-    delay: Duration,
-) -> Result<(), mcrs::Error> {
+fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::Error> {
     let color = COLORS[ant.id % COLORS.len()];
 
-    let modifier = delay.as_millis() as f32 * 0.010;
-
-    create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6 * modifier, false)?;
-    create_block_particle(mc, ant.position, color, 2, 0.8, 0.5, 1.5 * modifier, true)?;
+    create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6, false)?;
+    create_block_particle(mc, ant.position, color, 2, 0.8, 0.5, 1.5, true)?;
 
     Ok(())
 }
