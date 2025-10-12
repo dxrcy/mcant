@@ -65,11 +65,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ants.remove(0);
         }
 
+        std::thread::sleep(delay);
+
         for ant in ants.iter().filter(|ant| !ant.halted) {
             show_ant_indicator(&mut mc, ant, schema.properties.invisible)?;
         }
-
-        std::thread::sleep(delay);
 
         let len = ants.len();
         for i in 0..len {
