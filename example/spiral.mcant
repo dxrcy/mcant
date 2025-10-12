@@ -1,0 +1,50 @@
+set delay 1
+
+ant use spiral;
+end
+
+define $replace air
+
+define $edge   black_wool
+define $east   red_wool
+define $south  blue_wool
+define $west   lime_wool
+define $north  yellow_wool
+
+ruleset spiral
+    -- Find ground
+    0, air, -> 0,, down;
+    0,, -> A,, up;
+
+    -- Place center blocks to start spiral
+    A,, -> B, $edge, west;
+    B,, -> C, $edge, north;
+    C,, -> 1, $edge, east;
+
+    -- Spiral east
+    1, $replace, east  -> 2, $east, south;
+    2, $replace, south -> 1, $edge, south;
+    2,,          south -> 3,,       north;
+    3,,          north -> 1,,       east;
+
+    -- Spiral south
+    1, $replace, south -> 2, $south,west;
+    2, $replace, west  -> 1, $edge, west;
+    2,,          west  -> 3,,       east;
+    3,,          east  -> 1,,       south;
+
+    -- Spiral west
+    1, $replace, west  -> 2, $west, north;
+    2, $replace, north -> 1, $edge, north;
+    2,,          north -> 3,,       south;
+    3,,          south -> 1,,       west;
+
+    -- Spiral north
+    1, $replace, north -> 2, $north,east;
+    2, $replace, east  -> 1, $edge, east;
+    2,,          east  -> 3,,       west;
+    3,,          west  -> 1,,       north;
+
+    -- Keep going in same direction until found $replace
+    1,, -> 1,,;
+end
