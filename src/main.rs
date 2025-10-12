@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         for ant in ants.iter().filter(|ant| !ant.halted) {
-            show_ant_indicator(&mut mc, ant)?;
+            show_ant_indicator(&mut mc, ant, schema.properties.invisible)?;
         }
 
         std::thread::sleep(delay);
@@ -134,11 +134,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::Error> {
+fn show_ant_indicator(
+    mc: &mut mcrs::Connection,
+    ant: &Ant,
+    invisible: bool,
+) -> Result<(), mcrs::Error> {
     let color = COLORS[ant.id % COLORS.len()];
 
-    create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6, false)?;
-    create_block_particle(mc, ant.position, color, 3, 0.8, 0.5, 1.0, true)?;
+    if invisible {
+        create_block_particle(mc, ant.position, color, 0, 0.1, 0.5, 1.5, false)?;
+    } else {
+        create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6, false)?;
+        create_block_particle(mc, ant.position, color, 3, 0.8, 0.5, 1.0, true)?;
+    }
 
     Ok(())
 }
@@ -165,9 +173,9 @@ fn create_block_particle(
         for y in -count..=count {
             for z in -count..=count {
                 let offset = [
-                    (x as f32 / count as f32) * radius,
-                    (y as f32 / count as f32) * radius,
-                    (z as f32 / count as f32) * radius,
+                    (x as f32 / count.max(1) as f32) * radius,
+                    (y as f32 / count.max(1) as f32) * radius,
+                    (z as f32 / count.max(1) as f32) * radius,
                 ];
 
                 if round && (offset[0].powi(2) + offset[1].powi(2) + offset[2].powi(2)) > radius {

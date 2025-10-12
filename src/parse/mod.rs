@@ -119,6 +119,17 @@ impl<'a> Parser<'a> {
             return Ok(());
         }
 
+        if property.eq_ignore_ascii_case("invisible") {
+            if !value.eq_ignore_ascii_case("true") {
+                return Err(format!("invalid value for property `{}`", property));
+            }
+            if properties.invisible {
+                return Err(format!("duplicate property `{}`", property));
+            }
+            properties.invisible = true;
+            return Ok(());
+        }
+
         Err(format!("unknown property `{}`", property))
     }
 

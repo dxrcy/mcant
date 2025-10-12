@@ -50,6 +50,7 @@ pub struct Rule {
 pub struct Properties {
     pub delay: Option<Duration>,
     pub cap: Option<usize>,
+    pub invisible: bool,
 }
 
 pub type State = String;
