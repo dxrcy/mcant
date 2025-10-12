@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# mcrs = "0.4.2"
-mcrs = { path = "../mcrs" }
+mcrs = "0.4.3"
+# mcrs = { path = "../mcrs" }

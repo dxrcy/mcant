@@ -12,3 +12,5 @@ dependencies = [
 [[package]]
 name = "mcrs"
 version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "874db5c89ffeafa652793703b624a5f188094fcc57e96cd9dc0669741d9d94bc"
