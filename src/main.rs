@@ -138,7 +138,7 @@ fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::
     let color = COLORS[ant.id % COLORS.len()];
 
     create_block_particle(mc, ant.position, color, 4, 0.4, 0.5, 0.6, false)?;
-    create_block_particle(mc, ant.position, color, 2, 0.8, 0.5, 1.5, true)?;
+    create_block_particle(mc, ant.position, color, 3, 0.8, 0.5, 1.0, true)?;
 
     Ok(())
 }
