@@ -19,6 +19,7 @@ pub struct Ant {
     pub facing: Direction,
     pub state: State,
     pub halted: bool,
+    pub id: usize,
 }
 
 impl Ant {

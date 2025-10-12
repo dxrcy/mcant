@@ -202,6 +202,7 @@ impl<'a> Parser<'a> {
             facing: Direction::East,
             state: INITIAL_STATE.to_string(),
             halted: false,
+            id: 0,
         }))
     }
 

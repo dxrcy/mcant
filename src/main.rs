@@ -4,10 +4,13 @@ mod rules;
 use std::fs;
 use std::time::Duration;
 
-use mcrs::{Block, Coordinate};
+use mcrs::Block;
 
 use self::parse::Parser;
 use self::rules::{Ant, Rule, Ruleset, Schema};
+
+const DEFAULT_DELAY: Duration = Duration::from_millis(100);
+const DEAFULT_CAP: usize = 50;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args();
@@ -24,13 +27,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let player = mc.get_player_position()?;
 
+    let mut max_id = 0;
+
     let mut ants = schema.ants.clone();
     for ant in &mut ants {
         ant.position = player + ant.offset;
+        ant.id = max_id;
+        max_id += 1;
     }
-
-    const DEFAULT_DELAY: Duration = Duration::from_millis(100);
-    const DEAFULT_CAP: usize = 50;
 
     while !ants.iter().all(|ant| ant.halted) {
         while ants.len() > schema.properties.cap.unwrap_or(DEAFULT_CAP) {
@@ -45,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            show_ant_indicator(&mut mc, i, ant.position)?;
+            show_ant_indicator(&mut mc, ant)?;
 
             let block = mc.get_block(ant.position)?;
 
@@ -91,6 +95,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(spawn) = &rule.spawn {
                 let mut child = spawn.clone();
                 child.position = previous_position;
+                child.id = max_id;
+                max_id += 1;
                 ants.push(child);
             }
         }
@@ -101,11 +107,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn show_ant_indicator(
-    mc: &mut mcrs::Connection,
-    index: usize,
-    position: Coordinate,
-) -> Result<(), mcrs::Error> {
+fn show_ant_indicator(mc: &mut mcrs::Connection, ant: &Ant) -> Result<(), mcrs::Error> {
     // Particle positions get rounded to nearest half-block by Minecraft
     let count: i32 = 3; // Number of particles in cube, per direction
     let radius = 1.0;
@@ -133,7 +135,7 @@ fn show_ant_indicator(
         (0.5, 0.5, 0.0),
     ];
 
-    let color = colors[index % colors.len()];
+    let color = colors[ant.id % colors.len()];
 
     for x in -count..=count {
         for y in -count..=count {
@@ -155,9 +157,9 @@ fn show_ant_indicator(
                     g = color.1,
                     b = color.2,
                     size = size,
-                    x = position.x as f32 + offset[0] + correction,
-                    y = position.y as f32 + offset[1] + correction,
-                    z = position.z as f32 + offset[2] + correction,
+                    x = ant.position.x as f32 + offset[0] + correction,
+                    y = ant.position.y as f32 + offset[1] + correction,
+                    z = ant.position.z as f32 + offset[2] + correction,
                 ))?;
             }
         }
