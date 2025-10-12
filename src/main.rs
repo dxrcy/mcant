@@ -1,5 +1,6 @@
 mod parse;
 mod rules;
+mod world;
 
 use std::fs;
 use std::time::Duration;
@@ -60,6 +61,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let delay = schema.properties.delay.unwrap_or(DEFAULT_DELAY);
     let cap = schema.properties.cap.unwrap_or(DEAFULT_CAP);
 
+    let mut world = world::World::new(mc);
+
     while !ants.iter().all(|ant| ant.halted) {
         while ants.len() > cap {
             ants.remove(0);
@@ -68,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::thread::sleep(delay);
 
         for ant in ants.iter().filter(|ant| !ant.halted) {
-            show_ant_indicator(&mut mc, ant, schema.properties.invisible)?;
+            show_ant_indicator(world.get_mc(), ant, schema.properties.invisible)?;
         }
 
         let len = ants.len();
@@ -78,7 +81,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            let block = mc.get_block(ant.position)?;
+            let block = world.get_block(ant.position)?;
 
             print!(
                 "{:2} \t{} \t{} \t{:?} \t{} \t",
@@ -111,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let previous_position = ant.position;
             if let Some(to_block) = rule.to_block {
-                mc.set_block(ant.position, to_block)?;
+                world.set_block(ant.position, to_block)?;
             }
             ant.state = rule.to_state.clone();
             if let Some(to_facing) = rule.to_facing {
