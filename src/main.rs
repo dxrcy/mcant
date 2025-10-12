@@ -2,6 +2,7 @@ mod parse;
 mod rules;
 
 use std::fs;
+use std::time::Duration;
 
 use mcrs::{Block, Coordinate};
 
@@ -27,6 +28,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for ant in &mut ants {
         ant.position = player + ant.offset;
     }
+
+    const DEFAULT_DELAY: Duration = Duration::from_millis(100);
 
     while !ants.iter().all(|ant| ant.halted) {
         for (i, ant) in ants.iter_mut().enumerate() {
@@ -61,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             print!(" \t");
             if let Some(to_block) = rule.to_block {
-                print!("{:?}", to_block.get_name().unwrap_or("[unknown]"));
+                print!("{}", to_block.get_name().unwrap_or("[unknown]"));
             } else {
                 print!("-");
             }
@@ -77,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ant.move_forward();
         }
 
-        sleep(100);
+        std::thread::sleep(schema.properties.delay.unwrap_or(DEFAULT_DELAY));
     }
 
     Ok(())
@@ -168,8 +171,4 @@ fn find_ruleset<'a>(schema: &'a Schema, ant: &Ant) -> Option<&'a Ruleset> {
         }
     }
     None
-}
-
-fn sleep(time_ms: u64) {
-    std::thread::sleep(std::time::Duration::from_millis(time_ms))
 }

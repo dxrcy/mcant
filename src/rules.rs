@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use mcrs::{Block, Coordinate};
 
 pub const INITIAL_STATE: &str = "initial";
@@ -6,6 +8,7 @@ pub const INITIAL_STATE: &str = "initial";
 pub struct Schema {
     pub ants: Vec<Ant>,
     pub rulesets: Vec<Ruleset>,
+    pub properties: Properties,
 }
 
 #[derive(Clone, Debug)]
@@ -39,6 +42,11 @@ pub struct Rule {
     pub to_state: State,
     pub to_block: Option<Block>,
     pub to_facing: Option<Direction>,
+}
+
+#[derive(Debug, Default)]
+pub struct Properties {
+    pub delay: Option<Duration>,
 }
 
 pub type State = String;

@@ -2,13 +2,14 @@ mod tokens;
 
 use std::collections::HashMap;
 use std::iter::Peekable;
+use std::time::Duration;
 
 use mcrs::{Block, Coordinate};
 
 use self::tokens::{TokenKind, Tokens};
 use crate::Ant;
 use crate::parse::tokens::Token;
-use crate::rules::{Direction, INITIAL_STATE, Rule, Ruleset, Schema};
+use crate::rules::{Direction, INITIAL_STATE, Properties, Rule, Ruleset, Schema};
 
 pub struct Parser<'a> {
     tokens: Peekable<Tokens<'a>>,
@@ -26,8 +27,14 @@ impl<'a> Parser<'a> {
     pub fn parse_schema(&mut self) -> Result<Schema, String> {
         let mut ants = Vec::<Ant>::new();
         let mut rulesets = Vec::<Ruleset>::new();
+        let mut properties = Properties::default();
 
         while !self.is_end() {
+            if let Some((property, value)) = self.try_property_set()? {
+                Self::update_property(&mut properties, property, value)?;
+                continue;
+            }
+
             if let Some((symbol, definition)) = self.try_symbol_define()? {
                 if self.symbols.contains_key(&symbol) {
                     return Err(format!("redefinition of symbol `{}`", symbol));
@@ -70,7 +77,40 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(Schema { ants, rulesets })
+        Ok(Schema {
+            ants,
+            rulesets,
+            properties,
+        })
+    }
+
+    fn update_property(
+        properties: &mut Properties,
+        property: &str,
+        value: &str,
+    ) -> Result<(), String> {
+        if property.eq_ignore_ascii_case("delay") {
+            // FIXME: Parse uint
+            let millis = Self::parse_number(value)?;
+            if properties.delay.is_some() {
+                return Err(format!("duplicate property `{}`", property));
+            }
+            properties.delay = Some(Duration::from_millis(millis as u64));
+            return Ok(());
+        }
+
+        return Err(format!("unknown property `{}`", property));
+    }
+
+    fn try_property_set(&mut self) -> Result<Option<(&'a str, &'a str)>, String> {
+        if self.try_token_kind(TokenKind::KwSet).is_none() {
+            return Ok(None);
+        }
+
+        let property = self.expect_ident_no_expand()?;
+        let value = self.expect_ident()?;
+
+        Ok(Some((property, value)))
     }
 
     fn try_symbol_define(&mut self) -> Result<Option<(&'a str, &'a str)>, String> {
@@ -281,11 +321,14 @@ impl<'a> Parser<'a> {
         Ok(expansion)
     }
 
-    fn expect_number(&mut self) -> Result<f32, String> {
-        let string = self.expect_ident()?;
+    fn parse_number(string: &str) -> Result<f32, String> {
         string
             .parse()
             .map_err(|_| format!("expected number, found non-numeric identifier"))
+    }
+
+    fn expect_number(&mut self) -> Result<f32, String> {
+        Self::parse_number(self.expect_ident()?)
     }
 
     fn expect_list_end(&mut self, end: TokenKind) -> Result<(), String> {
