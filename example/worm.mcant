@@ -1,11 +1,11 @@
 set delay 10
 
-ant use $worm; end
+ant use worm; end
 
 define $worm white_hardened_clay
 define $dir east
 
-ruleset $worm
+ruleset worm
     -- Find ground
     0, air, -> 0,, down;
     0, grass, -> 1,, up;
