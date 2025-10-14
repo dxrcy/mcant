@@ -1,50 +1,24 @@
-set delay 10
+set delay 0
 
 ant use worm; end
 
 define $worm white_hardened_clay
-define $dir east
+define $forward north
+define $back south
 
 ruleset worm
     -- Find ground
     0, air, -> 0,, down;
-    0, grass, -> 1,, up;
+    0,, -> below,, up;
 
-    -- Worm up
-    1, air/$worm, up -> 2, $worm, up;
-    2, air/$worm, up -> 1, $worm, $dir;
-
-    -- Worm across (air)
-    1, air/$worm, $dir -> 2, $worm, $dir;
-    2, air/$worm, $dir -> 1, $worm, down;
-
-    -- Worm down
-    1, air/$worm, down -> 1, $worm, down;
-    1, grass,     down -> 1, $worm, $dir;
-
-    -- Worm across (ground)
-    1, grass, $dir -> 2, $worm, $dir;
-    2, grass, $dir -> 3, $worm, $dir;
-    3, grass, $dir -> 4, $worm, $dir;
-    4, grass, $dir -> 1, $worm, up;
-
-    -- Crossing obstacles:
-
-    -- Reached top of obstacle, step forward
-    ascend, air/$worm, up -> step, $worm, $dir;
-    -- Grass found, return to normal worm
-    step, grass, -> 1, $worm, up;
-    -- Check block below
-    step, air/$worm, $dir -> step, $worm, down;
-    step, air/$worm, down -> descend, $worm, ;
-    -- Air found below, descend until grass
-    descend, air, -> descend, $worm, down;
-    descend, grass, -> 1,, $dir;
-    -- Continue crossing obstacle
-    step,, down -> step,, up;
-    step,, up -> step,, $dir;
-
-    -- Wildcard, ascend until found air
-    ,, -> ascend, $worm, up;
+    -- If air is below, keep going down
+    below,   air, -> below,   $worm, down;
+    -- ...otherwise, try to advance
+    below,   ,    -> advance, ,      up;
+    advance, ,    -> next,    $worm, $forward;
+    -- If next block is air, repeat cycle
+    next,    air, -> below,   $worm, down;
+    -- ...otherwise, retreat and try 1 block higher
+    next,    ,    -> retreat, ,      $back;
+    retreat, ,    -> advance, $worm, up;
 end
-
