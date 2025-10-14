@@ -1,9 +1,11 @@
 set delay 10
-set cap 12
 
 ant use tree;
     offset 0, -1, 0; -- Spawn just below the player
 end
+
+define $wood oak_wood
+define $leaves oak_leaves
 
 ruleset tree
     -- Find ground
@@ -11,27 +13,29 @@ ruleset tree
     0,, -> 1,, up;
 
     -- Trunk below branches
-    1, air, up -> 2, oak_wood, up;
-    2, air, up -> 3, oak_wood, up;
-    3, air, up -> 4, oak_wood, up;
+    1, air, -> 2, $wood,;
+    2, air, -> 3, $wood,;
+    3, air, -> 4, $wood,;
 
     -- Trunk with alternating branches
-    4, air, up -> 5, oak_wood, up
-        +spawn ant use branch; facing east; end;
-    5, air, up -> 6, oak_wood, up
-        +spawn ant use branch; facing west; end;
-    6, air, up -> 7, oak_wood, up
-        +spawn ant use branch; facing north; end;
-    7, air, up -> 4, oak_wood, up
-        +spawn ant use branch; facing south; end;
+     4, air, ->  5, $wood, +spawn ant use branch; facing east;  state 0; end;
+     5, air, ->  6, $wood, +spawn ant use branch; facing west;  state 0; end;
+     6, air, ->  7, $wood, +spawn ant use branch; facing north; state 0; end;
+     7, air, ->  8, $wood, +spawn ant use branch; facing south; state 0; end;
+     8, air, ->  9, $wood, +spawn ant use branch; facing east;  state 1; end;
+     9, air, -> 10, $wood, +spawn ant use branch; facing west;  state 2; end;
+    10, air, -> 11, $wood, +spawn ant use branch; facing north; state 2; end;
+    11, air, -> 12, $wood, +spawn ant use branch; facing south; state 2; end;
+    12, air, -> 13, $wood,;
+    13, air, ->  -, $leaves,;
 end
 
 -- Place branch in the current direction
 ruleset branch
     0,, -> 1,,;
-    1, air, -> 2, oak_wood,;
-    2, air, -> 3, oak_wood,;
-    3, air, -> 4, oak_wood,;
-    4, air, -> -, oak_wood,;
+    1,, -> 2, $wood,;
+    2,, -> 3, $wood,;
+    3,, -> 4, $wood,;
+    4,, -> -, $leaves,;
 end
 
