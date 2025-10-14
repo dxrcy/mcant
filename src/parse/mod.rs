@@ -9,7 +9,7 @@ use mcrs::{Block, Coordinate};
 use self::tokens::{TokenKind, Tokens};
 use crate::Ant;
 use crate::parse::tokens::Token;
-use crate::rules::{Direction, INITIAL_STATE, Properties, Rule, Ruleset, Schema};
+use crate::rules::{Direction, Properties, Rule, Ruleset, Schema};
 
 pub struct Parser<'a> {
     tokens: Peekable<Tokens<'a>>,
@@ -168,6 +168,7 @@ impl<'a> Parser<'a> {
         let mut ruleset: Option<String> = None;
         let mut offset: Option<Coordinate> = None;
         let mut facing: Option<Direction> = None;
+        let mut state: Option<&str> = None;
 
         while !self
             .tokens
@@ -211,6 +212,16 @@ impl<'a> Parser<'a> {
                     continue;
                 }
 
+                TokenKind::KwState => {
+                    let ident = self.expect_ident()?;
+                    self.expect_token_kind(TokenKind::Semicolon)?;
+                    if state.is_some() {
+                        return Err(String::from("duplicate attribute `state` for ant"));
+                    }
+                    state = Some(ident);
+                    continue;
+                }
+
                 _ => {
                     return Err(format!(
                         "expected attribute or {}, found {}",
@@ -224,6 +235,8 @@ impl<'a> Parser<'a> {
 
         let ruleset = ruleset.ok_or_else(|| String::from("missing ruleset for ant"))?;
 
+        // TODO: Move
+        const DEFAULT_STATE: &str = "0";
         const DEFAULT_DIRECTION: Direction = Direction::East;
 
         Ok(Some(Ant {
@@ -231,7 +244,7 @@ impl<'a> Parser<'a> {
             offset: offset.unwrap_or(Coordinate::new(0, 0, 0)),
             position: Coordinate::new(0, 0, 0),
             facing: facing.unwrap_or(DEFAULT_DIRECTION),
-            state: INITIAL_STATE.to_string(),
+            state: state.unwrap_or(DEFAULT_STATE).to_string(),
             halted: false,
             id: 0,
         }))
