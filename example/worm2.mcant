@@ -9,16 +9,16 @@ define $back south
 ruleset worm
     -- Find ground
     0, air, -> 0,, down;
-    0,, -> below,, up;
+    0,, -> 1,, up;
 
     -- If air is below, keep going down
-    below,   air, -> below,   $worm, down;
+    1, air, down/up  -> 1, $worm, down;
     -- ...otherwise, try to move forward
-    below,   ,    -> advance, ,      up;
-    advance, ,    -> next,    $worm, $forward;
+    1, ,    down     -> 1, ,      up;
+    1, ,    up       -> 1, $worm, $forward;
     -- If next block is air, repeat cycle
-    next,    air, -> below,   $worm, down;
+    1, air, $forward -> 1, $worm, down;
     -- ...otherwise, go back and try 1 block higher
-    next,    ,    -> retreat, ,      $back;
-    retreat, ,    -> advance, $worm, up;
+    1, ,    $forward -> 1, ,      $back;
+    1, ,    $back    -> 1, $worm, up;
 end
