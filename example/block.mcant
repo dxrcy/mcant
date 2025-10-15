@@ -2,7 +2,7 @@ set delay 0
 set cap 200000
 set invisible true
 
-ant use length; end
+ant use dir1; end
 
 define $dir1 east
 define $dir2 north
@@ -12,31 +12,35 @@ define $block gold_block
 -- Change `-` to `1` to never halt
 define $final -
 
-ruleset length
+ruleset dir1
+    -- Find ground
     0, air, -> 0,, down;
     0,, -> A,, up;
-    A,, -> 1,, $dir1 +spawn ant use width; end;
-    1,, -> 2,, $dir1 +spawn ant use width; end;
-    2,, -> 3,, $dir1 +spawn ant use width; end;
-    3,, -> 4,, $dir1 +spawn ant use width; end;
-    4,, -> 5,, $dir1 +spawn ant use width; end;
-    5,, -> $final,, $dir1 +spawn ant use width; end;
+    -- Spawn children along first axis
+    A,, -> 1,,      $dir1 +spawn ant use dir2; end;
+    1,, -> 2,,      $dir1 +spawn ant use dir2; end;
+    2,, -> 3,,      $dir1 +spawn ant use dir2; end;
+    3,, -> 4,,      $dir1 +spawn ant use dir2; end;
+    4,, -> 5,,      $dir1 +spawn ant use dir2; end;
+    5,, -> $final,, $dir1 +spawn ant use dir2; end;
 end
 
-ruleset width
-    0,, -> 1,, $dir2 +spawn ant use height; end;
-    1,, -> 2,, $dir2 +spawn ant use height; end;
-    2,, -> 3,, $dir2 +spawn ant use height; end;
-    3,, -> 4,, $dir2 +spawn ant use height; end;
-    4,, -> 5,, $dir2 +spawn ant use height; end;
-    5,, -> $final,, $dir2 +spawn ant use height; end;
+ruleset dir2
+    -- Spawn children along second axis
+    0,, -> 1,,      $dir2 +spawn ant use dir3; end;
+    1,, -> 2,,      $dir2 +spawn ant use dir3; end;
+    2,, -> 3,,      $dir2 +spawn ant use dir3; end;
+    3,, -> 4,,      $dir2 +spawn ant use dir3; end;
+    4,, -> 5,,      $dir2 +spawn ant use dir3; end;
+    5,, -> $final,, $dir2 +spawn ant use dir3; end;
 end
 
-ruleset height
-    0,, -> 1, $block, $dir3;
-    1,, -> 2, $block, $dir3;
-    2,, -> 3, $block, $dir3;
-    3,, -> 4, $block, $dir3;
-    4,, -> 5, $block, $dir3;
+ruleset dir3
+    -- Place blocks along third axis
+    0,, -> 1,      $block, $dir3;
+    1,, -> 2,      $block, $dir3;
+    2,, -> 3,      $block, $dir3;
+    3,, -> 4,      $block, $dir3;
+    4,, -> 5,      $block, $dir3;
     5,, -> $final, $block, $dir3;
 end
