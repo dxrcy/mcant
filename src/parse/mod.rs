@@ -111,11 +111,11 @@ impl<'a> Parser<'a> {
         }
 
         if property.eq_ignore_ascii_case("cap") {
-            let count: usize = Self::parse_numeric(value)?;
+            let number: usize = Self::parse_numeric(value)?;
             if properties.cap.is_some() {
                 return Err(format!("duplicate property `{}`", property));
             }
-            properties.cap = Some(count);
+            properties.cap = Some(number);
             return Ok(());
         }
 
@@ -127,6 +127,24 @@ impl<'a> Parser<'a> {
                 return Err(format!("duplicate property `{}`", property));
             }
             properties.invisible = true;
+            return Ok(());
+        }
+
+        if property.eq_ignore_ascii_case("cachesize") {
+            let number: u32 = Self::parse_numeric(value)?;
+            if properties.cache_size.is_some() {
+                return Err(format!("duplicate property `{}`", property));
+            }
+            properties.cache_size = Some(number);
+            return Ok(());
+        }
+
+        if property.eq_ignore_ascii_case("cachetime") {
+            let secs: u64 = Self::parse_numeric(value)?;
+            if properties.cache_time.is_some() {
+                return Err(format!("duplicate property `{}`", property));
+            }
+            properties.cache_time = Some(Duration::from_secs(secs));
             return Ok(());
         }
 

@@ -12,6 +12,8 @@ use self::rules::{Ant, Rule, Ruleset, Schema};
 
 const DEFAULT_DELAY: Duration = Duration::from_millis(100);
 const DEAFULT_CAP: usize = 50;
+const DEFAULT_CACHE_SIZE: u32 = 4;
+const DEFAULT_CACHE_TIME: Duration = Duration::from_secs(8);
 
 const COLORS: &[(f32, f32, f32)] = &[
     (1.0, 0.0, 0.0),
@@ -61,7 +63,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let delay = schema.properties.delay.unwrap_or(DEFAULT_DELAY);
     let cap = schema.properties.cap.unwrap_or(DEAFULT_CAP);
 
-    let mut world = world::World::new(mc);
+    let mut world = world::World::new(
+        mc,
+        schema.properties.cache_size.unwrap_or(DEFAULT_CACHE_SIZE),
+        schema.properties.cache_time.unwrap_or(DEFAULT_CACHE_TIME),
+    );
 
     while !ants.iter().all(|ant| ant.halted) {
         while ants.len() > cap {

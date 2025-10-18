@@ -49,6 +49,8 @@ pub struct Properties {
     pub delay: Option<Duration>,
     pub cap: Option<usize>,
     pub invisible: bool,
+    pub cache_size: Option<u32>,
+    pub cache_time: Option<Duration>,
 }
 
 pub type State = String;

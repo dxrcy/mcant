@@ -1,11 +1,16 @@
-use std::time::Instant;
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 use mcrs::{Block, Coordinate, Size};
 
 pub struct World {
     mc: mcrs::Connection,
     cache: HashMap<Coordinate, CacheEntry>,
+
+    /// Each side of cube are length `cache_size * 2 + 1`.
+    cache_size: u32,
+    /// Maximum lifetime for a cache entry.
+    cache_time: Duration,
 }
 
 struct CacheEntry {
@@ -13,18 +18,17 @@ struct CacheEntry {
     expiration: Instant,
 }
 
+// FIXME: Clean expired cache
+
 impl World {
-    pub fn new(mc: mcrs::Connection) -> Self {
+    pub fn new(mc: mcrs::Connection, cache_size: u32, cache_time: Duration) -> Self {
         Self {
             mc,
             cache: HashMap::new(),
+            cache_size,
+            cache_time,
         }
     }
-
-    /// Each side of cube are length `CHUNK_RADIUS * 2 + 1`.
-    const CHUNK_RADIUS: u32 = 8;
-    /// Maximum lifetime for a cache entry.
-    const MAX_LIFETIME: Duration = Duration::from_secs(8);
 
     pub fn get_mc(&mut self) -> &mut mcrs::Connection {
         &mut self.mc
@@ -35,7 +39,7 @@ impl World {
             return Ok(block);
         }
 
-        let size_half = Size::new(Self::CHUNK_RADIUS, Self::CHUNK_RADIUS, Self::CHUNK_RADIUS);
+        let size_half = Size::new(self.cache_size, self.cache_size, self.cache_size);
 
         let origin = location - size_half;
         let bound = location + size_half;
@@ -63,6 +67,10 @@ impl World {
     }
 
     fn get_cache(&mut self, location: Coordinate) -> Option<Block> {
+        if !self.cache_enabled() {
+            return None;
+        }
+
         let entry = self.cache.get(&location)?;
         if Instant::now() > entry.expiration {
             self.cache.remove(&location);
@@ -72,19 +80,27 @@ impl World {
     }
 
     fn insert_cache(&mut self, origin: Coordinate, location: Coordinate, block: Block) {
+        if !self.cache_enabled() {
+            return;
+        }
+
         self.cache.insert(
             location,
             CacheEntry {
                 block,
-                expiration: Self::calculate_expiration(origin, location),
+                expiration: self.calculate_expiration(origin, location),
             },
         );
     }
 
-    fn calculate_expiration(origin: Coordinate, location: Coordinate) -> Instant {
+    fn cache_enabled(&self) -> bool {
+        self.cache_size > 0 && self.cache_time.as_millis() > 0
+    }
+
+    fn calculate_expiration(&self, origin: Coordinate, location: Coordinate) -> Instant {
         let dist = manhattan_distance(origin, location);
-        let max_dist = Self::CHUNK_RADIUS * 3;
-        let lifetime = (Self::MAX_LIFETIME * (max_dist - dist)) / max_dist;
+        let max_dist = self.cache_size * 3;
+        let lifetime = (self.cache_time * (max_dist - dist)) / max_dist;
         Instant::now() + lifetime
     }
 }
