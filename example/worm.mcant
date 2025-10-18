@@ -3,19 +3,18 @@ set delay 0
 ant use worm; end
 
 define $worm white_hardened_clay
-define $forward north
+define $forw north
 define $back south
 
 ruleset worm
-    -- Find ground
-    0, air, -> 0,, down;
-    0,, -> below,, up;
+    -- Initial state
+    0,, -> below,, down;
 
     -- If air is below, keep going down
     below,   air, -> below,   $worm, down;
     -- ...otherwise, try to move forward
     below,   ,    -> advance, ,      up;
-    advance, ,    -> next,    $worm, $forward;
+    advance, ,    -> next,    $worm, $forw;
     -- If next block is air, repeat cycle
     next,    air, -> below,   $worm, down;
     -- ...otherwise, go back and try 1 block higher
