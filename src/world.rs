@@ -3,18 +3,18 @@ use std::time::{Duration, Instant};
 
 use mcrs::{Block, Coordinate, Size};
 
-const CACHE_CLEAN_COOLDOWN: Duration = Duration::from_secs(4);
-const MAX_CACHE_DISTANCE: u32 = 16;
-
 pub struct World {
     mc: mcrs::Connection,
-    cache: HashMap<Coordinate, CacheEntry>,
-    next_cache_clean: Instant,
+    cache: Cache,
+}
 
+struct Cache {
+    entries: HashMap<Coordinate, CacheEntry>,
+    next_clean: Instant,
     /// Each side of cube are length `cache_size * 2 + 1`.
-    cache_size: u32,
+    chunk_radius: u32,
     /// Maximum lifetime for a cache entry.
-    cache_time: Duration,
+    max_lifetime: Duration,
 }
 
 struct CacheEntry {
@@ -26,10 +26,7 @@ impl World {
     pub fn new(mc: mcrs::Connection, cache_size: u32, cache_time: Duration) -> Self {
         Self {
             mc,
-            cache: HashMap::new(),
-            next_cache_clean: Instant::now() + CACHE_CLEAN_COOLDOWN,
-            cache_size,
-            cache_time,
+            cache: Cache::new(cache_size, cache_time),
         }
     }
 
@@ -38,20 +35,21 @@ impl World {
     }
 
     pub fn get_block(&mut self, location: Coordinate) -> Result<Block, mcrs::Error> {
-        if let Some(block) = self.get_cache(location) {
+        if !self.cache.enabled() {
+            return self.mc.get_block(location);
+        }
+
+        if let Some(block) = self.cache.get(location) {
             return Ok(block);
         }
 
-        self.clean_cache(location);
+        self.cache.clean(location);
 
-        let size_half = Size::new(self.cache_size, self.cache_size, self.cache_size);
-
-        let origin = location - size_half;
-        let bound = location + size_half;
-
+        let (origin, bound) = self.cache.get_chunk(location);
         let chunk = self.mc.get_blocks(origin, bound)?;
         for entry in &chunk {
-            self.insert_cache(location, entry.position_worldspace(), entry.block());
+            self.cache
+                .insert(location, entry.position_worldspace(), entry.block());
         }
 
         Ok(chunk
@@ -61,55 +59,75 @@ impl World {
 
     pub fn set_block(&mut self, location: Coordinate, block: Block) -> Result<(), mcrs::Error> {
         if self
-            .get_cache(location)
+            .cache
+            .get(location)
             .is_some_and(|cached| cached == block)
         {
             return Ok(());
         }
 
-        self.clean_cache(location);
-
-        self.insert_cache(location, location, block);
+        self.cache.clean(location);
+        self.cache.insert(location, location, block);
         self.mc.set_block(location, block)
+    }
+}
+
+impl Cache {
+    const CACHE_COOLDOWN: Duration = Duration::from_secs(4);
+    const MAX_DISTANCE: u32 = 16;
+
+    pub fn new(chunk_radius: u32, max_lifetime: Duration) -> Self {
+        Self {
+            entries: HashMap::new(),
+            next_clean: Instant::now() + Self::CACHE_COOLDOWN,
+            chunk_radius,
+            max_lifetime,
+        }
+    }
+
+    pub fn get_chunk(&self, location: Coordinate) -> (Coordinate, Coordinate) {
+        debug_assert!(self.enabled());
+        let size_half = Size::new(self.chunk_radius, self.chunk_radius, self.chunk_radius);
+        (location - size_half, location + size_half)
     }
 
     /// Call before inserting cache.
-    fn clean_cache(&mut self, origin: Coordinate) {
-        if !self.cache_enabled() {
+    pub fn clean(&mut self, origin: Coordinate) {
+        if !self.enabled() {
             return;
         }
 
         let now = Instant::now();
-        if now < self.next_cache_clean {
+        if now < self.next_clean {
             return;
         }
 
-        self.cache.retain(|location, entry| {
-            now <= entry.expiration && manhattan_distance(origin, *location) <= MAX_CACHE_DISTANCE
+        self.entries.retain(|location, entry| {
+            now <= entry.expiration && manhattan_distance(origin, *location) <= Self::MAX_DISTANCE
         });
 
-        self.next_cache_clean = now + CACHE_CLEAN_COOLDOWN;
+        self.next_clean = now + Self::CACHE_COOLDOWN;
     }
 
-    fn get_cache(&mut self, location: Coordinate) -> Option<Block> {
-        if !self.cache_enabled() {
+    pub fn get(&mut self, location: Coordinate) -> Option<Block> {
+        if !self.enabled() {
             return None;
         }
 
-        let entry = self.cache.get(&location)?;
+        let entry = self.entries.get(&location)?;
         if Instant::now() > entry.expiration {
-            self.cache.remove(&location);
+            self.entries.remove(&location);
             return None;
         }
         Some(entry.block)
     }
 
-    fn insert_cache(&mut self, origin: Coordinate, location: Coordinate, block: Block) {
-        if !self.cache_enabled() {
+    pub fn insert(&mut self, origin: Coordinate, location: Coordinate, block: Block) {
+        if !self.enabled() {
             return;
         }
 
-        self.cache.insert(
+        self.entries.insert(
             location,
             CacheEntry {
                 block,
@@ -118,14 +136,14 @@ impl World {
         );
     }
 
-    fn cache_enabled(&self) -> bool {
-        self.cache_size > 0 && self.cache_time.as_millis() > 0
+    pub fn enabled(&self) -> bool {
+        self.chunk_radius > 0 && self.max_lifetime.as_millis() > 0
     }
 
     fn calculate_expiration(&self, origin: Coordinate, location: Coordinate) -> Instant {
         let dist = manhattan_distance(origin, location);
-        let max_dist = self.cache_size * 3;
-        let lifetime = (self.cache_time * (max_dist - dist)) / max_dist;
+        let max_dist = self.chunk_radius * 3;
+        let lifetime = (self.max_lifetime * (max_dist - dist)) / max_dist;
         Instant::now() + lifetime
     }
 }
