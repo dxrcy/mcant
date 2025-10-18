@@ -1,7 +1,6 @@
-set delay 0
+set delay 5
 set cap 200000
 set invisible true
-set cachesize 2
 
 ant use dir1; end
 
