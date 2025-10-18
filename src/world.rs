@@ -3,9 +3,13 @@ use std::time::{Duration, Instant};
 
 use mcrs::{Block, Coordinate, Size};
 
+const CACHE_CLEAN_COOLDOWN: Duration = Duration::from_secs(4);
+const MAX_CACHE_DISTANCE: u32 = 16;
+
 pub struct World {
     mc: mcrs::Connection,
     cache: HashMap<Coordinate, CacheEntry>,
+    next_cache_clean: Instant,
 
     /// Each side of cube are length `cache_size * 2 + 1`.
     cache_size: u32,
@@ -18,13 +22,12 @@ struct CacheEntry {
     expiration: Instant,
 }
 
-// FIXME: Clean expired cache
-
 impl World {
     pub fn new(mc: mcrs::Connection, cache_size: u32, cache_time: Duration) -> Self {
         Self {
             mc,
             cache: HashMap::new(),
+            next_cache_clean: Instant::now() + CACHE_CLEAN_COOLDOWN,
             cache_size,
             cache_time,
         }
@@ -38,6 +41,8 @@ impl World {
         if let Some(block) = self.get_cache(location) {
             return Ok(block);
         }
+
+        self.clean_cache(location);
 
         let size_half = Size::new(self.cache_size, self.cache_size, self.cache_size);
 
@@ -62,8 +67,28 @@ impl World {
             return Ok(());
         }
 
+        self.clean_cache(location);
+
         self.insert_cache(location, location, block);
         self.mc.set_block(location, block)
+    }
+
+    /// Call before inserting cache.
+    fn clean_cache(&mut self, origin: Coordinate) {
+        if !self.cache_enabled() {
+            return;
+        }
+
+        let now = Instant::now();
+        if now < self.next_cache_clean {
+            return;
+        }
+
+        self.cache.retain(|location, entry| {
+            now <= entry.expiration && manhattan_distance(origin, *location) <= MAX_CACHE_DISTANCE
+        });
+
+        self.next_cache_clean = now + CACHE_CLEAN_COOLDOWN;
     }
 
     fn get_cache(&mut self, location: Coordinate) -> Option<Block> {
